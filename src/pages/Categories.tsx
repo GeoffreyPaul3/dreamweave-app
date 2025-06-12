@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -50,28 +51,34 @@ const Categories = () => {
 
   useEffect(() => {
     fetchCategories();
-    fetchListings();
+  }, []);
 
-    // Set up real-time subscription for listings
-    const channel = supabase
-      .channel('listings_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'listings'
-        },
-        () => {
-          fetchListings();
-        }
-      )
-      .subscribe();
+  useEffect(() => {
+    if (categories.length > 0) {
+      fetchListings();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [selectedCategory, sortBy]);
+      // Set up real-time subscription for listings
+      const channel = supabase
+        .channel('listings_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'listings'
+          },
+          () => {
+            fetchListings();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory, sortBy, categories]);
 
   const fetchCategories = async () => {
     try {

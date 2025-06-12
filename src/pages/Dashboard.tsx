@@ -220,58 +220,58 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+          <Card className="overflow-hidden">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center">
                 <div className="p-2 bg-blue-100 rounded-lg">
-                  <PlusCircle className="h-6 w-6 text-blue-600" />
+                  <PlusCircle className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />
                 </div>
-                <div className="ml-4">
+                <div className="ml-3 md:ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Listings</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalListings}</p>
+                  <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.totalListings}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
+          <Card className="overflow-hidden">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center">
                 <div className="p-2 bg-green-100 rounded-lg">
-                  <Eye className="h-6 w-6 text-green-600" />
+                  <Eye className="h-5 w-5 md:h-6 md:w-6 text-green-600" />
                 </div>
-                <div className="ml-4">
+                <div className="ml-3 md:ml-4">
                   <p className="text-sm font-medium text-gray-600">Active Listings</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.activeListings}</p>
+                  <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.activeListings}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
+          <Card className="overflow-hidden">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center">
                 <div className="p-2 bg-purple-100 rounded-lg">
-                  <CreditCard className="h-6 w-6 text-purple-600" />
+                  <CreditCard className="h-5 w-5 md:h-6 md:w-6 text-purple-600" />
                 </div>
-                <div className="ml-4">
+                <div className="ml-3 md:ml-4">
                   <p className="text-sm font-medium text-gray-600">Sold Items</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.soldItems}</p>
+                  <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.soldItems}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
+          <Card className="overflow-hidden">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center">
                 <div className="p-2 bg-yellow-100 rounded-lg">
-                  <CreditCard className="h-6 w-6 text-yellow-600" />
+                  <CreditCard className="h-5 w-5 md:h-6 md:w-6 text-yellow-600" />
                 </div>
-                <div className="ml-4">
+                <div className="ml-3 md:ml-4">
                   <p className="text-sm font-medium text-gray-600">Commission Paid</p>
-                  <p className="text-2xl font-bold text-gray-900">MWK {stats.totalEarnings.toLocaleString()}</p>
+                  <p className="text-xl md:text-2xl font-bold text-gray-900">MWK {stats.totalEarnings.toLocaleString()}</p>
                 </div>
               </div>
             </CardContent>
@@ -287,9 +287,9 @@ const Dashboard = () => {
 
           <TabsContent value="listings">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <CardTitle>My Listings</CardTitle>
-                <Button onClick={() => navigate('/create-listing')}>
+                <Button onClick={() => navigate('/create-listing')} className="w-full sm:w-auto">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Create New Listing
                 </Button>
@@ -305,16 +305,16 @@ const Dashboard = () => {
                 ) : (
                   <div className="space-y-4">
                     {listings.map((listing) => (
-                      <div key={listing.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center space-x-4">
+                      <div key={listing.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
+                        <div className="flex items-start sm:items-center space-x-4 w-full sm:w-auto">
                           <img 
                             src={listing.featured_image} 
                             alt={listing.title}
-                            className="w-16 h-16 object-cover rounded"
+                            className="w-16 h-16 object-cover rounded flex-shrink-0"
                           />
-                          <div>
-                            <h3 className="font-medium">{listing.title}</h3>
-                            <div className="flex items-center space-x-4 text-sm text-gray-500">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-medium truncate">{listing.title}</h3>
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
                               <span className="flex items-center">
                                 <MapPin className="w-4 h-4 mr-1" />
                                 {listing.location}
@@ -329,7 +329,7 @@ const Dashboard = () => {
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                           <Badge variant={listing.status === 'sold' ? 'secondary' : listing.status === 'active' ? 'default' : 'secondary'}>
                             {listing.status.toUpperCase()}
                           </Badge>
@@ -379,15 +379,15 @@ const Dashboard = () => {
                 ) : (
                   <div className="space-y-4">
                     {transactions.map((transaction) => (
-                      <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <h3 className="font-medium">Listing Commission</h3>
-                          <p className="text-sm text-gray-600">{transaction.listing_title}</p>
+                      <div key={transaction.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-medium truncate">Listing Commission</h3>
+                          <p className="text-sm text-gray-600 truncate">{transaction.listing_title}</p>
                           <p className="text-xs text-gray-500">
                             {new Date(transaction.created_at).toLocaleDateString()}
                           </p>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right w-full sm:w-auto">
                           <p className="text-lg font-semibold">
                             MWK {transaction.amount.toLocaleString()}
                           </p>
@@ -405,9 +405,9 @@ const Dashboard = () => {
 
           <TabsContent value="profile">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <CardTitle>Profile Information</CardTitle>
-                <Button onClick={handleEditProfile}>
+                <Button onClick={handleEditProfile} className="w-full sm:w-auto">
                   <Edit className="mr-2 h-4 w-4" />
                   Edit Profile
                 </Button>
@@ -416,27 +416,27 @@ const Dashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3">
-                      <User className="w-5 h-5 text-gray-400" />
-                      <div>
+                      <User className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                      <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-500">Full Name</p>
-                        <p className="text-lg">{profile?.full_name}</p>
+                        <p className="text-lg truncate">{profile?.full_name}</p>
                       </div>
                     </div>
                     
                     <div className="flex items-center space-x-3">
-                      <Mail className="w-5 h-5 text-gray-400" />
-                      <div>
+                      <Mail className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                      <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-500">Email</p>
-                        <p className="text-lg">{profile?.email}</p>
+                        <p className="text-lg truncate">{profile?.email}</p>
                       </div>
                     </div>
 
                     {profile?.phone && (
                       <div className="flex items-center space-x-3">
-                        <Phone className="w-5 h-5 text-gray-400" />
-                        <div>
+                        <Phone className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                        <div className="min-w-0">
                           <p className="text-sm font-medium text-gray-500">Phone</p>
-                          <p className="text-lg">{profile.phone}</p>
+                          <p className="text-lg truncate">{profile.phone}</p>
                         </div>
                       </div>
                     )}
@@ -445,7 +445,7 @@ const Dashboard = () => {
                   <div className="space-y-4">
                     <div>
                       <p className="text-sm font-medium text-gray-500">KYC Status</p>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Badge
                           variant={
                             profile.kyc_status === 'pending'
@@ -476,21 +476,21 @@ const Dashboard = () => {
 
                 <div className="pt-6 border-t">
                   <h3 className="text-lg font-medium mb-4">Account Statistics</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <p className="text-2xl font-bold text-gray-900">{stats.totalListings}</p>
+                      <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.totalListings}</p>
                       <p className="text-sm text-gray-600">Total Listings</p>
                     </div>
                     <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <p className="text-2xl font-bold text-gray-900">{stats.activeListings}</p>
+                      <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.activeListings}</p>
                       <p className="text-sm text-gray-600">Active Listings</p>
                     </div>
                     <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <p className="text-2xl font-bold text-gray-900">{stats.soldItems}</p>
+                      <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.soldItems}</p>
                       <p className="text-sm text-gray-600">Items Sold</p>
                     </div>
                     <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <p className="text-2xl font-bold text-gray-900">MWK {stats.totalEarnings.toLocaleString()}</p>
+                      <p className="text-xl md:text-2xl font-bold text-gray-900">MWK {stats.totalEarnings.toLocaleString()}</p>
                       <p className="text-sm text-gray-600">Total Earnings</p>
                     </div>
                   </div>
