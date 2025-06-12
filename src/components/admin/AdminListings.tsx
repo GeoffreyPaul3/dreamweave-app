@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, XCircle, Trash2, Eye } from 'lucide-react';
+import { CheckCircle, XCircle, Trash2, Eye, Check, X } from 'lucide-react';
 
 interface Listing {
   id: string;
@@ -19,6 +19,7 @@ interface Listing {
     full_name: string;
     email: string;
   };
+  location: string;
 }
 
 const AdminListings = () => {
@@ -148,82 +149,108 @@ const AdminListings = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Manage Listings</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {listings.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">No listings found</p>
-          ) : (
-            listings.map((listing) => (
-              <div key={listing.id} className="flex items-center space-x-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                <img
-                  src={listing.featured_image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop'}
-                  alt={listing.title}
-                  className="w-16 h-16 object-cover rounded"
-                />
-                
-                <div className="flex-1">
-                  <h3 className="font-semibold">{listing.title}</h3>
-                  <p className="text-sm text-gray-600">
-                    By {listing.profiles?.full_name} ({listing.profiles?.email})
-                  </p>
-                  <p className="text-sm font-medium">MWK {listing.price.toLocaleString()}</p>
-                  <div className="flex items-center space-x-2 mt-1">
-                    {getStatusBadge(listing.status, listing.payment_verified)}
-                    {listing.payment_verified && (
-                      <Badge variant="outline" className="text-green-600 border-green-600">
-                        Paid
+    <div className="space-y-4">
+      {listings.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-gray-500">No listings found</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {listings.map((listing) => (
+            <Card key={listing.id} className="overflow-hidden">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col gap-4">
+                  <div className="aspect-square relative rounded-lg overflow-hidden">
+                    <img
+                      src={listing.featured_image}
+                      alt={listing.title}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-semibold truncate flex-1">{listing.title}</h3>
+                      <Badge
+                        variant={
+                          listing.status === 'active'
+                            ? 'default'
+                            : listing.status === 'pending_approval'
+                            ? 'secondary'
+                            : 'destructive'
+                        }
+                      >
+                        {listing.status.replace('_', ' ')}
                       </Badge>
-                    )}
+                    </div>
+
+                    <div className="space-y-1 text-sm text-gray-600">
+                      <p className="truncate">
+                        <span className="font-medium">Seller:</span> {listing.profiles?.full_name}
+                      </p>
+                      <p className="truncate">
+                        <span className="font-medium">Location:</span> {listing.location}
+                      </p>
+                      <p className="truncate">
+                        <span className="font-medium">Price:</span> MWK {listing.price.toLocaleString()}
+                      </p>
+                      <p className="truncate">
+                        <span className="font-medium">Listed:</span> {new Date(listing.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {listing.status === 'pending_approval' && (
+                        <>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="flex-1 sm:flex-none"
+                            onClick={() => handleListingAction(listing.id, 'approve')}
+                          >
+                            <Check className="h-4 w-4 mr-2" />
+                            Approve
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="flex-1 sm:flex-none"
+                            onClick={() => handleListingAction(listing.id, 'reject')}
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Reject
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 sm:flex-none"
+                        onClick={() => window.open(`/listing/${listing.id}`, '_blank')}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 sm:flex-none"
+                        onClick={() => handleListingAction(listing.id, 'delete')}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </Button>
+                    </div>
                   </div>
                 </div>
-
-                <div className="flex space-x-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => window.open(`/listings/${listing.id}`, '_blank')}
-                  >
-                    <Eye className="w-4 h-4 mr-1" />
-                    View
-                  </Button>
-                  {listing.status === 'pending_approval' && listing.payment_verified && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleListingAction(listing.id, 'reject')}
-                      >
-                        <XCircle className="w-4 h-4 mr-1" />
-                        Reject
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleListingAction(listing.id, 'approve')}
-                      >
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Approve
-                      </Button>
-                    </>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleListingAction(listing.id, 'delete')}
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            ))
-          )}
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 };
 

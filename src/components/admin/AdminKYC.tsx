@@ -201,136 +201,136 @@ const AdminKYC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Submissions List */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">KYC Submissions</h2>
-          {submissions.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center text-gray-500">
-                No KYC submissions found
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {submissions.map((submission) => (
-                <Card
-                  key={submission.id}
-                  className={`cursor-pointer transition-colors ${
-                    selectedSubmission?.id === submission.id
-                      ? 'border-primary'
-                      : 'hover:border-gray-300'
-                  }`}
-                  onClick={() => setSelectedSubmission(submission)}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium">{submission.full_name}</h3>
-                        <p className="text-sm text-gray-500">{submission.profiles?.email}</p>
-                        <p className="text-sm text-gray-500">{submission.phone_number}</p>
-                      </div>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* KYC Submissions List */}
+      <div className="lg:col-span-2 space-y-4">
+        {submissions.length === 0 ? (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <p className="text-gray-500">No KYC submissions found</p>
+            </CardContent>
+          </Card>
+        ) : (
+          submissions.map((submission) => (
+            <Card key={submission.id} className="overflow-hidden">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col sm:flex-row justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <h3 className="font-semibold truncate">{submission.full_name}</h3>
                       <Badge
                         variant={
                           submission.status === 'pending'
                             ? 'default'
                             : submission.status === 'verified'
-                            ? 'success'
+                            ? 'secondary'
                             : 'destructive'
                         }
                       >
                         {submission.status}
                       </Badge>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Submission Details */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Submission Details</h2>
-          {selectedSubmission ? (
-            <Card>
-              <CardContent className="p-6 space-y-4">
-                <div>
-                  <h3 className="font-medium">Personal Information</h3>
-                  <div className="mt-2 space-y-2">
-                    <p><span className="text-gray-500">Name:</span> {selectedSubmission.full_name}</p>
-                    <p><span className="text-gray-500">Email:</span> {selectedSubmission.profiles?.email}</p>
-                    <p><span className="text-gray-500">Phone:</span> {selectedSubmission.phone_number}</p>
-                    <p><span className="text-gray-500">Address:</span> {selectedSubmission.address}</p>
+                    <div className="space-y-1 text-sm text-gray-600">
+                      <p className="truncate">
+                        <span className="font-medium">Email:</span> {submission.profiles?.email}
+                      </p>
+                      <p className="truncate">
+                        <span className="font-medium">Phone:</span> {submission.phone_number}
+                      </p>
+                      <p className="truncate">
+                        <span className="font-medium">Address:</span> {submission.address}
+                      </p>
+                      <p className="truncate">
+                        <span className="font-medium">Document:</span> {submission.document_type}
+                      </p>
+                    </div>
                   </div>
-                </div>
-
-                <div>
-                  <h3 className="font-medium">Document Information</h3>
-                  <div className="mt-2 space-y-2">
-                    <p><span className="text-gray-500">Document Type:</span> {selectedSubmission.document_type}</p>
+                  <div className="flex flex-wrap gap-2 justify-end">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDownload(selectedSubmission.document_url)}
+                      onClick={() => setSelectedSubmission(submission)}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Review
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownload(submission.document_url)}
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      Download Document
+                      Download
                     </Button>
                   </div>
                 </div>
-
-                {selectedSubmission.status === 'pending' && (
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="font-medium mb-2">Review Actions</h3>
-                      <div className="space-y-2">
-                        <Button
-                          variant="outline"
-                          className="w-full"
-                          onClick={() => handleApprove(selectedSubmission.id)}
-                        >
-                          <Check className="h-4 w-4 mr-2" />
-                          Approve
-                        </Button>
-                        <div className="space-y-2">
-                          <Textarea
-                            placeholder="Enter reason for rejection"
-                            value={rejectionReason}
-                            onChange={(e) => setRejectionReason(e.target.value)}
-                          />
-                          <Button
-                            variant="destructive"
-                            className="w-full"
-                            onClick={() => handleReject(selectedSubmission.id)}
-                          >
-                            <X className="h-4 w-4 mr-2" />
-                            Reject
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {selectedSubmission.status === 'rejected' && selectedSubmission.rejection_reason && (
-                  <div>
-                    <h3 className="font-medium">Rejection Reason</h3>
-                    <p className="mt-2 text-gray-600">{selectedSubmission.rejection_reason}</p>
-                  </div>
-                )}
               </CardContent>
             </Card>
-          ) : (
-            <Card>
-              <CardContent className="p-6 text-center text-gray-500">
-                Select a submission to view details
-              </CardContent>
-            </Card>
-          )}
-        </div>
+          ))
+        )}
       </div>
+
+      {/* Review Panel */}
+      {selectedSubmission && (
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle>Review Submission</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <h3 className="font-medium">Submission Details</h3>
+              <div className="space-y-1 text-sm">
+                <p><span className="font-medium">Name:</span> {selectedSubmission.full_name}</p>
+                <p><span className="font-medium">Email:</span> {selectedSubmission.profiles?.email}</p>
+                <p><span className="font-medium">Phone:</span> {selectedSubmission.phone_number}</p>
+                <p><span className="font-medium">Address:</span> {selectedSubmission.address}</p>
+                <p><span className="font-medium">Document:</span> {selectedSubmission.document_type}</p>
+                <p><span className="font-medium">Submitted:</span> {new Date(selectedSubmission.created_at).toLocaleDateString()}</p>
+              </div>
+            </div>
+
+            {selectedSubmission.status === 'pending' && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Rejection Reason (if rejecting)</label>
+                  <Textarea
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    placeholder="Enter reason for rejection..."
+                    className="min-h-[100px]"
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="default"
+                    className="flex-1 sm:flex-none"
+                    onClick={() => handleApprove(selectedSubmission.id)}
+                  >
+                    <Check className="h-4 w-4 mr-2" />
+                    Approve
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="flex-1 sm:flex-none"
+                    onClick={() => handleReject(selectedSubmission.id)}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Reject
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {selectedSubmission.status === 'rejected' && selectedSubmission.rejection_reason && (
+              <div className="space-y-2">
+                <h3 className="font-medium">Rejection Reason</h3>
+                <p className="text-sm text-gray-600">{selectedSubmission.rejection_reason}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
