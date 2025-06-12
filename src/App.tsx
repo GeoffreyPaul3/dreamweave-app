@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,10 +9,7 @@ import Index from "./pages/Index";
 import AuthPage from "./components/auth/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import CreateListing from "./pages/CreateListing";
-<<<<<<< HEAD
-=======
 import EditListing from "./pages/EditListing";
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
 import SearchListings from "./pages/SearchListings";
 import Messages from "./pages/Messages";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -41,10 +34,7 @@ const AppContent = () => {
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/create-listing" element={<CreateListing />} />
-<<<<<<< HEAD
-=======
       <Route path="/edit-listing/:id" element={<EditListing />} />
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
       <Route path="/search" element={<SearchListings />} />
       <Route path="/messages" element={<Messages />} />
       <Route path="/admin" element={<AdminDashboard />} />

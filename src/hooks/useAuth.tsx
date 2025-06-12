@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,11 +6,6 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-<<<<<<< HEAD
-=======
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName: string) => Promise<void>;
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
   signOut: () => Promise<void>;
 }
 
@@ -40,41 +34,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-<<<<<<< HEAD
-=======
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
-  };
-
-  const signUp = async (email: string, password: string, fullName: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-      },
-    });
-    if (error) throw error;
-  };
-
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    await supabase.auth.signOut();
   };
 
   return (
-<<<<<<< HEAD
     <AuthContext.Provider value={{ user, session, loading, signOut }}>
-=======
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
       {children}
     </AuthContext.Provider>
   );

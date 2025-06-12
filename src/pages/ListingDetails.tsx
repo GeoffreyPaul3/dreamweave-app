@@ -3,18 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-<<<<<<< HEAD
-import { Heart, MapPin, Star, MessageCircle, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
-import ListingChat from '@/components/messaging/ListingChat';
-=======
 import { Heart, MapPin, Star, MessageCircle, ArrowLeft, ChevronLeft, ChevronRight, Phone } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import ListingChat from '@/components/messaging/ListingChat';
 import Header from '@/components/Header';
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
 
 interface Listing {
   id: string;
@@ -57,11 +50,8 @@ const ListingDetails = () => {
   const [error, setError] = useState<string | null>(null);
   const [isPaymentPending, setIsPaymentPending] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-<<<<<<< HEAD
   const [isZoomed, setIsZoomed] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
-=======
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -105,14 +95,11 @@ const ListingDetails = () => {
         }
 
         setListing(data);
-<<<<<<< HEAD
-=======
         
         // Check if user has favorited this listing
         if (user && data.favorites) {
           setIsFavorited(data.favorites.some(fav => fav.user_id === user.id));
         }
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -121,11 +108,7 @@ const ListingDetails = () => {
     };
 
     fetchListing();
-<<<<<<< HEAD
-  }, [id]);
-=======
   }, [id, user]);
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
 
   const handleFavorite = async () => {
     if (!user) {
@@ -192,20 +175,10 @@ const ListingDetails = () => {
 
   if (loading) {
     return (
-<<<<<<< HEAD
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading listing details...</p>
-=======
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex items-center justify-center mt-20">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading listing details...</p>
-          </div>
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
         </div>
       </div>
     );
@@ -213,38 +186,27 @@ const ListingDetails = () => {
 
   if (error) {
     return (
-<<<<<<< HEAD
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center text-red-500">{error}</div>
-=======
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex items-center justify-center mt-20">
-          <div className="text-center text-red-500">{error}</div>
+        <div className="text-center">
+          <p className="text-red-500">{error}</p>
+          <Button onClick={() => navigate(-1)} className="mt-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Go Back
+          </Button>
         </div>
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
       </div>
     );
   }
 
   if (!listing) {
     return (
-<<<<<<< HEAD
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Listing Not Found</h2>
-          <p className="text-gray-600 mb-4">The listing you're looking for doesn't exist or has been removed.</p>
-          <Button onClick={() => navigate('/search')}>Back to Search</Button>
-=======
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex items-center justify-center mt-20">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Listing Not Found</h2>
-            <p className="text-gray-600 mb-4">The listing you're looking for doesn't exist or has been removed.</p>
-            <Button onClick={() => navigate('/search')}>Back to Search</Button>
-          </div>
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
+          <p className="text-gray-600">Listing not found</p>
+          <Button onClick={() => navigate(-1)} className="mt-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Go Back
+          </Button>
         </div>
       </div>
     );
@@ -252,56 +214,33 @@ const ListingDetails = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-<<<<<<< HEAD
-=======
       <Header />
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
       <div className="container mx-auto px-4 py-8">
         <Button
           variant="ghost"
-          className="mb-6"
           onClick={() => navigate(-1)}
+          className="mb-4"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Image Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Image Gallery */}
           <div className="space-y-4">
-<<<<<<< HEAD
-            <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
-              {isImageLoading && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-              )}
-              <img
-                src={getImageUrl(listing.images?.[selectedImageIndex] || listing.featured_image)}
-                alt={listing.title}
-                className={`w-full h-full object-cover transition-transform duration-200 ${
-                  isZoomed ? 'scale-150 cursor-zoom-out' : 'cursor-zoom-in'
-                }`}
-                onLoad={() => setIsImageLoading(false)}
-                onError={(e) => {
-                  e.currentTarget.src = 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop';
-                  setIsImageLoading(false);
-                }}
-                onClick={() => setIsZoomed(!isZoomed)}
-=======
             <div className="relative aspect-square rounded-lg overflow-hidden">
               <img
-                src={getImageUrl(listing.images?.[selectedImageIndex] || listing.featured_image)}
+                src={getImageUrl(listing.images?.[selectedImageIndex] || listing.featured_image || '')}
                 alt={listing.title}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.src = 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop';
-                }}
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
+                className={`w-full h-full object-cover transition-transform duration-300 ${
+                  isZoomed ? 'scale-150' : 'scale-100'
+                }`}
+                onClick={() => setIsZoomed(!isZoomed)}
+                onLoad={() => setIsImageLoading(false)}
               />
-              {listing.status === 'sold' && (
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                  <span className="text-white text-2xl font-bold">SOLD</span>
+              {isImageLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                 </div>
               )}
               {listing.images && listing.images.length > 1 && (
@@ -309,62 +248,38 @@ const ListingDetails = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-<<<<<<< HEAD
-                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow-md"
-=======
                     className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white"
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
                     onClick={handlePreviousImage}
                   >
-                    <ChevronLeft className="w-6 h-6" />
+                    <ChevronLeft className="h-6 w-6" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-<<<<<<< HEAD
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow-md"
-=======
                     className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white"
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
                     onClick={handleNextImage}
                   >
-                    <ChevronRight className="w-6 h-6" />
+                    <ChevronRight className="h-6 w-6" />
                   </Button>
                 </>
               )}
             </div>
 
-            {/* Thumbnails */}
+            {/* Thumbnail Gallery */}
             {listing.images && listing.images.length > 1 && (
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {listing.images.map((image, index) => (
                   <button
                     key={index}
-<<<<<<< HEAD
-                    className={`relative aspect-square rounded-lg overflow-hidden transition-all ${
-                      selectedImageIndex === index 
-                        ? 'ring-2 ring-primary scale-105' 
-                        : 'hover:scale-105'
-                    }`}
-                    onClick={() => {
-                      setSelectedImageIndex(index);
-                      setIsImageLoading(true);
-                      setIsZoomed(false);
-                    }}
-=======
-                    className={`relative aspect-square rounded-lg overflow-hidden ${
-                      selectedImageIndex === index ? 'ring-2 ring-primary' : ''
+                    className={`relative aspect-square rounded-lg overflow-hidden border-2 ${
+                      selectedImageIndex === index ? 'border-primary' : 'border-transparent'
                     }`}
                     onClick={() => setSelectedImageIndex(index)}
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
                   >
                     <img
                       src={getImageUrl(image)}
                       alt={`${listing.title} - Image ${index + 1}`}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop';
-                      }}
                     />
                   </button>
                 ))}
@@ -372,109 +287,106 @@ const ListingDetails = () => {
             )}
           </div>
 
-          {/* Details Section */}
+          {/* Listing Details */}
           <div className="space-y-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{listing.title}</h1>
-              <div className="flex items-center space-x-4 text-gray-600">
-                <div className="flex items-center">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  {listing.location}
-                </div>
-                <div className="flex items-center">
-                  <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
-                  {listing.profiles?.rating || 0} ({listing.profiles?.total_reviews || 0} reviews)
-                </div>
-              </div>
+              <h1 className="text-3xl font-bold">{listing.title}</h1>
+              <p className="text-2xl font-semibold text-primary mt-2">
+                {formatPrice(listing.price)}
+              </p>
             </div>
 
-            <div className="text-3xl font-bold text-primary">
-              {formatPrice(listing.price)}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <MapPin className="h-4 w-4 text-gray-500 mr-1" />
+                <span className="text-gray-600">{listing.location}</span>
+              </div>
+              <div className="flex items-center">
+                <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                <span className="text-gray-600">
+                  {listing.profiles.rating.toFixed(1)} ({listing.profiles.total_reviews} reviews)
+                </span>
+              </div>
             </div>
 
             <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Description</h3>
-                <p className="text-gray-600 whitespace-pre-wrap">{listing.description}</p>
-              </div>
+              <h2 className="text-xl font-semibold">Description</h2>
+              <p className="text-gray-600 whitespace-pre-wrap">{listing.description}</p>
+            </div>
 
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Details</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Condition</p>
-                    <p className="font-medium">{listing.condition}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Category</p>
-                    <p className="font-medium">{listing.category?.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Status</p>
-                    <p className={`font-medium ${listing.status === 'sold' ? 'text-red-600' : listing.status === 'active' ? 'text-green-600' : 'text-gray-600'}`}>
-                      {listing.status?.charAt(0).toUpperCase() + (listing.status?.slice(1) || '')}
-                    </p>
-                  </div>
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Details</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-gray-500">Condition</p>
+                  <p className="font-medium">{listing.condition}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Category</p>
+                  <p className="font-medium">{listing.category.name}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Listed</p>
+                  <p className="font-medium">
+                    {new Date(listing.created_at || '').toLocaleDateString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Views</p>
+                  <p className="font-medium">{listing.views || 0}</p>
                 </div>
               </div>
+            </div>
 
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Seller</h3>
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Seller Information</h2>
+              <Card className="p-4">
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-full overflow-hidden">
-                    <img
-                      src={listing.profiles?.avatar_url || '/default-avatar.png'}
-                      alt={listing.profiles?.full_name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                  <img
+                    src={listing.profiles.avatar_url || 'https://via.placeholder.com/50'}
+                    alt={listing.profiles.full_name}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
                   <div>
-                    <p className="font-medium">{listing.profiles?.full_name}</p>
-                    {user && listing.profiles?.phone && (
-<<<<<<< HEAD
-                      <p className="text-gray-600">{listing.profiles.phone}</p>
-=======
-                      <div className="flex items-center text-gray-600">
-                        <Phone className="w-4 h-4 mr-1" />
-                        <p>{listing.profiles.phone}</p>
-                      </div>
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
-                    )}
+                    <p className="font-medium">{listing.profiles.full_name}</p>
+                    <div className="flex items-center">
+                      <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                      <span className="text-sm text-gray-600">
+                        {listing.profiles.rating.toFixed(1)} ({listing.profiles.total_reviews} reviews)
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+                {listing.profiles.phone && (
+                  <div className="mt-4 flex items-center space-x-2">
+                    <Phone className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-600">{listing.profiles.phone}</span>
+                  </div>
+                )}
+              </Card>
             </div>
 
             <div className="flex space-x-4">
-              {listing.status !== 'sold' && (
+              <Button
+                variant={isFavorited ? "destructive" : "outline"}
+                onClick={handleFavorite}
+                disabled={isLoading}
+                className="flex-1"
+              >
+                <Heart className={`mr-2 h-4 w-4 ${isFavorited ? 'fill-current' : ''}`} />
+                {isFavorited ? 'Remove from Favorites' : 'Add to Favorites'}
+              </Button>
+              {user && user.id !== listing.seller_id && (
                 <Button
+                  variant="default"
+                  onClick={() => navigate(`/messages/${listing.id}`)}
                   className="flex-1"
-                  onClick={handleFavorite}
-                  disabled={isLoading}
                 >
-                  <Heart className={`w-4 h-4 mr-2 ${isFavorited ? 'fill-current' : ''}`} />
-                  {isFavorited ? 'Remove from Favorites' : 'Add to Favorites'}
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Contact Seller
                 </Button>
               )}
             </div>
-
-            {/* Add the ListingChat component only if the listing is not sold */}
-            {listing.status !== 'sold' && (
-              <ListingChat
-                listingId={listing.id}
-                sellerId={listing.seller_id}
-                sellerName={listing.profiles?.full_name || 'Unknown Seller'}
-                listingTitle={listing.title}
-              />
-            )}
-
-            {isPaymentPending && (
-              <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-yellow-800">
-                  Payment verification in progress. Please wait while we confirm your payment.
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -482,8 +394,4 @@ const ListingDetails = () => {
   );
 };
 
-<<<<<<< HEAD
-export default ListingDetails; 
-=======
 export default ListingDetails;
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8

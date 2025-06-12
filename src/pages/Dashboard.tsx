@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
-=======
->>>>>>> 6e9f060a764a1ae412505473b6698e4b7d1116e8
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
