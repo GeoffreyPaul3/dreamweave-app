@@ -445,9 +445,24 @@ const Dashboard = () => {
                   <div className="space-y-4">
                     <div>
                       <p className="text-sm font-medium text-gray-500">KYC Status</p>
-                      <Badge variant={profile?.kyc_status === 'verified' ? 'default' : 'secondary'}>
-                        {profile?.kyc_status?.toUpperCase() || 'PENDING'}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            profile.kyc_status === 'pending'
+                              ? 'default'
+                              : profile.kyc_status === 'verified'
+                              ? 'secondary'
+                              : 'destructive'
+                          }
+                        >
+                          {profile.kyc_status === 'verified' ? 'Verified' : profile.kyc_status}
+                        </Badge>
+                        {profile.kyc_status === 'pending' && (
+                          <span className="text-sm text-muted-foreground">
+                            Your KYC submission is being reviewed
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div>

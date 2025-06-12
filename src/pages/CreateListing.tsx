@@ -84,6 +84,30 @@ const CreateListing = () => {
     fetchUserProfile();
   }, [user, navigate]);
 
+  useEffect(() => {
+    const checkKYCStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('kyc_status')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile || profile.kyc_status !== 'verified') {
+        toast({
+          title: "KYC Required",
+          description: "You must complete KYC verification before creating a listing.",
+          variant: "destructive"
+        });
+        navigate('/dashboard');
+      }
+    };
+
+    checkKYCStatus();
+  }, [navigate]);
+
   const fetchCategories = async () => {
     try {
       const { data, error } = await supabase

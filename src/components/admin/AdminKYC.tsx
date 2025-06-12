@@ -90,19 +90,19 @@ const AdminKYC = () => {
       const { error: kycError } = await supabase
         .from('kyc_submissions')
         .update({
-          status: 'approved',
+          status: 'verified',
           reviewed_at: new Date().toISOString()
         })
         .eq('id', submissionId);
 
       if (kycError) throw kycError;
 
-      // Update user profile to mark as seller with approved KYC
+      // Update user profile to mark as seller with verified KYC
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           is_seller: true,
-          kyc_status: 'approved'
+          kyc_status: 'verified'
         })
         .eq('id', submission.user_id);
 
@@ -110,7 +110,7 @@ const AdminKYC = () => {
 
       toast({
         title: "Success",
-        description: "KYC submission approved successfully. User can now create listings."
+        description: "KYC submission verified successfully. User can now create listings."
       });
 
       fetchKYCSubmissions();
@@ -235,7 +235,7 @@ const AdminKYC = () => {
                         variant={
                           submission.status === 'pending'
                             ? 'default'
-                            : submission.status === 'approved'
+                            : submission.status === 'verified'
                             ? 'success'
                             : 'destructive'
                         }
