@@ -7,12 +7,14 @@ export default defineConfig(() => ({
   server: {
     host: "::",
     port: 8080,
-    // no custom history fallback needed—Vite does this by default
   },
   plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  optimizeDeps: {
+    include: ["react", "react-dom"],
   },
 }));
