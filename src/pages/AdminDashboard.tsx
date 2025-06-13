@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -150,50 +152,50 @@ const AdminDashboard = () => {
         </div>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-          <Card className="overflow-hidden">
-            <CardContent className="p-4 md:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardContent className="p-6">
               <div className="flex items-center">
-                <Users className="h-6 w-6 md:h-8 md:w-8 text-blue-600" />
-                <div className="ml-3 md:ml-4">
+                <Users className="h-8 w-8 text-blue-600" />
+                <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Users</p>
-                  <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden">
-            <CardContent className="p-4 md:p-6">
+          <Card>
+            <CardContent className="p-6">
               <div className="flex items-center">
-                <FileText className="h-6 w-6 md:h-8 md:w-8 text-yellow-600" />
-                <div className="ml-3 md:ml-4">
+                <FileText className="h-8 w-8 text-yellow-600" />
+                <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Pending KYC</p>
-                  <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.pendingKYC}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.pendingKYC}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden">
-            <CardContent className="p-4 md:p-6">
+          <Card>
+            <CardContent className="p-6">
               <div className="flex items-center">
-                <CheckCircle className="h-6 w-6 md:h-8 md:w-8 text-green-600" />
-                <div className="ml-3 md:ml-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+                <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Listings</p>
-                  <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.totalListings}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalListings}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden">
-            <CardContent className="p-4 md:p-6">
+          <Card>
+            <CardContent className="p-6">
               <div className="flex items-center">
-                <DollarSign className="h-6 w-6 md:h-8 md:w-8 text-green-600" />
-                <div className="ml-3 md:ml-4">
+                <DollarSign className="h-8 w-8 text-green-600" />
+                <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                  <p className="text-xl md:text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-gray-900">
                     MWK {stats.totalRevenue.toLocaleString()}
                   </p>
                 </div>
@@ -203,16 +205,18 @@ const AdminDashboard = () => {
         </div>
 
         {/* Admin Tabs */}
-        <Tabs defaultValue="kyc" className="space-y-4">
+        <Tabs defaultValue="listings" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="kyc" className="text-sm sm:text-base">KYC Submissions</TabsTrigger>
-            <TabsTrigger value="listings" className="text-sm sm:text-base">Listings</TabsTrigger>
+            <TabsTrigger value="listings">Manage Listings</TabsTrigger>
+            <TabsTrigger value="kyc">KYC Verification</TabsTrigger>
           </TabsList>
-          <TabsContent value="kyc" className="space-y-4">
-            <AdminKYC />
-          </TabsContent>
-          <TabsContent value="listings" className="space-y-4">
+          
+          <TabsContent value="listings" className="mt-6">
             <AdminListings />
+          </TabsContent>
+          
+          <TabsContent value="kyc" className="mt-6">
+            <AdminKYC />
           </TabsContent>
         </Tabs>
       </div>

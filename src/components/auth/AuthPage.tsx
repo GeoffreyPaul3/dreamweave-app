@@ -1,275 +1,280 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Link } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect } from 'react';
 import { Mail, Lock, User, Phone, MapPin } from 'lucide-react';
 
-const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
-
-const registerSchema = z.object({
-  fullName: z.string().min(3, "Full name must be at least 3 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string(),
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  location: z.string().min(3, "Location must be at least 3 characters"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
-type RegisterFormData = z.infer<typeof registerSchema>;
-
 const AuthPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const { signIn, signUp, loading } = useAuth();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
 
-  useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
-    }
-  }, [user, navigate]);
-
-  const {
-    register: registerLogin,
-    handleSubmit: handleLoginSubmit,
-    formState: { errors: loginErrors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  const [loginData, setLoginData] = useState({
+    email: '',
+    password: ''
   });
 
-  const {
-    register: registerRegister,
-    handleSubmit: handleRegisterSubmit,
-    formState: { errors: registerErrors },
-  } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+  const [signupData, setSignupData] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    fullName: '',
+    phone: '',
+    location: ''
   });
 
-  const loginSubmit = async (data: LoginFormData) => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
     try {
-      await signIn(data.email, data.password);
+      console.log('Attempting login with:', loginData.email);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginData.email,
+        password: loginData.password,
+      });
+
+      if (error) {
+        console.error('Login error:', error);
+        throw error;
+      }
+
+      console.log('Login successful:', data);
+
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
+
+      // Redirect to dashboard after successful login
       navigate('/dashboard');
     } catch (error: any) {
+      console.error('Login failed:', error);
       toast({
         title: "Login failed",
         description: error.message || "An error occurred during login",
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const registerSubmit = async (data: RegisterFormData) => {
-    try {
-      await signUp(data.email, data.password, {
-        full_name: data.fullName,
-        phone: data.phone,
-        location: data.location
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (signupData.password !== signupData.confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure your passwords match.",
+        variant: "destructive"
       });
+      return;
+    }
+
+    if (signupData.password.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      console.log('Attempting signup with:', signupData.email);
+
+      const { data, error } = await supabase.auth.signUp({
+        email: signupData.email,
+        password: signupData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: signupData.fullName,
+            phone: signupData.phone,
+            location: signupData.location
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Signup error:', error);
+        throw error;
+      }
+
+      console.log('Signup successful:', data);
+
       toast({
         title: "Account created!",
-        description: "Please check your email to verify your account.",
+        description: "Please check your email to verify your account, or continue if email verification is disabled.",
       });
-      setIsLogin(true);
+
+      // If user is immediately available (email confirmation disabled), redirect
+      if (data.user && !data.user.email_confirmed_at) {
+        // Wait a moment for the profile to be created
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
+      }
     } catch (error: any) {
+      console.error('Signup failed:', error);
       toast({
         title: "Signup failed",
         description: error.message || "An error occurred during signup",
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
-            {isLogin ? 'Welcome back' : 'Create an account'}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="text-center">
+          <div className="w-16 h-16 gradient-primary rounded-xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-white font-bold text-3xl">D</span>
+          </div>
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+            DreamWeave
           </CardTitle>
+          <CardDescription>Join Malawi's premier marketplace</CardDescription>
         </CardHeader>
+
         <CardContent>
-          {isLogin ? (
-            <form onSubmit={handleLoginSubmit(loginSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+          <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="login">
+              <form onSubmit={handleLogin} className="space-y-4">
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    id="email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="Email"
                     className="pl-10"
-                    {...registerLogin('email')}
+                    value={loginData.email}
+                    onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                    required
                   />
                 </div>
-                {loginErrors.email && (
-                  <p className="text-sm text-red-500">{loginErrors.email.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    id="password"
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder="Password"
                     className="pl-10"
-                    {...registerLogin('password')}
+                    value={loginData.password}
+                    onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                    required
                   />
                 </div>
-                {loginErrors.password && (
-                  <p className="text-sm text-red-500">{loginErrors.password.message}</p>
-                )}
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Signing in...' : 'Sign in'}
-              </Button>
-              <p className="text-center text-sm text-gray-600">
-                Don't have an account?{' '}
-                <button
-                  type="button"
-                  onClick={() => setIsLogin(false)}
-                  className="text-primary hover:underline"
+
+                <Button 
+                  type="submit" 
+                  className="w-full gradient-primary"
+                  disabled={isLoading}
                 >
-                  Sign up
-                </button>
-              </p>
-            </form>
-          ) : (
-            <form onSubmit={handleRegisterSubmit(registerSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                  {isLoading ? 'Logging in...' : 'Login'}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="signup">
+              <form onSubmit={handleSignup} className="space-y-4">
                 <div className="relative">
                   <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    id="fullName"
                     type="text"
-                    placeholder="Enter your full name"
+                    placeholder="Full Name"
                     className="pl-10"
-                    {...registerRegister('fullName')}
+                    value={signupData.fullName}
+                    onChange={(e) => setSignupData(prev => ({ ...prev, fullName: e.target.value }))}
+                    required
                   />
                 </div>
-                {registerErrors.fullName && (
-                  <p className="text-sm text-red-500">{registerErrors.fullName.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    id="email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="Email"
                     className="pl-10"
-                    {...registerRegister('email')}
+                    value={signupData.email}
+                    onChange={(e) => setSignupData(prev => ({ ...prev, email: e.target.value }))}
+                    required
                   />
                 </div>
-                {registerErrors.email && (
-                  <p className="text-sm text-red-500">{registerErrors.email.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+
                 <div className="relative">
                   <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    id="phone"
                     type="tel"
-                    placeholder="Enter your phone number"
+                    placeholder="Phone Number"
                     className="pl-10"
-                    {...registerRegister('phone')}
+                    value={signupData.phone}
+                    onChange={(e) => setSignupData(prev => ({ ...prev, phone: e.target.value }))}
                   />
                 </div>
-                {registerErrors.phone && (
-                  <p className="text-sm text-red-500">{registerErrors.phone.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
+
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    id="location"
                     type="text"
-                    placeholder="Enter your location"
+                    placeholder="Location"
                     className="pl-10"
-                    {...registerRegister('location')}
+                    value={signupData.location}
+                    onChange={(e) => setSignupData(prev => ({ ...prev, location: e.target.value }))}
                   />
                 </div>
-                {registerErrors.location && (
-                  <p className="text-sm text-red-500">{registerErrors.location.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    id="password"
                     type="password"
-                    placeholder="Create a password"
+                    placeholder="Password"
                     className="pl-10"
-                    {...registerRegister('password')}
+                    value={signupData.password}
+                    onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))}
+                    required
                   />
                 </div>
-                {registerErrors.password && (
-                  <p className="text-sm text-red-500">{registerErrors.password.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    id="confirmPassword"
                     type="password"
-                    placeholder="Confirm your password"
+                    placeholder="Confirm Password"
                     className="pl-10"
-                    {...registerRegister('confirmPassword')}
+                    value={signupData.confirmPassword}
+                    onChange={(e) => setSignupData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    required
                   />
                 </div>
-                {registerErrors.confirmPassword && (
-                  <p className="text-sm text-red-500">{registerErrors.confirmPassword.message}</p>
-                )}
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Creating account...' : 'Create account'}
-              </Button>
-              <p className="text-center text-sm text-gray-600">
-                Already have an account?{' '}
-                <button
-                  type="button"
-                  onClick={() => setIsLogin(true)}
-                  className="text-primary hover:underline"
+
+                <Button 
+                  type="submit" 
+                  className="w-full gradient-primary"
+                  disabled={isLoading}
                 >
-                  Sign in
-                </button>
-              </p>
-            </form>
-          )}
+                  {isLoading ? 'Creating account...' : 'Create Account'}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
