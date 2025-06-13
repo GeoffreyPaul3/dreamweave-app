@@ -95,7 +95,7 @@ const CreateListing = () => {
         .from('kyc_submissions')
         .select('status')
         .eq('user_id', user.id)
-        .eq('status', 'approved')
+        .eq('status', 'verified')
         .single();
 
       const { data: profile, error } = await supabase
@@ -106,13 +106,13 @@ const CreateListing = () => {
 
       if (error) throw error;
 
-      // If user has approved KYC but profile hasn't been updated, update it
-      if (kycData && (!profile.is_seller || profile.kyc_status !== 'approved')) {
+      // If user has verified KYC but profile hasn't been updated, update it
+      if (kycData && (!profile.is_seller || profile.kyc_status !== 'verified')) {
         const { error: updateError } = await supabase
           .from('profiles')
           .update({
             is_seller: true,
-            kyc_status: 'approved'
+            kyc_status: 'verified'
           })
           .eq('id', user.id);
 
@@ -132,8 +132,8 @@ const CreateListing = () => {
         setUserProfile(profile);
       }
 
-      // Check if user needs KYC for first-time selling
-      if (!kycData && (!profile.is_seller || profile.kyc_status !== 'approved')) {
+      // Only show KYC form if there's no verified KYC submission
+      if (!kycData) {
         setShowKYC(true);
       }
     } catch (error: any) {
