@@ -91,10 +91,7 @@ const AboutUs = () => {
             <h2 className="text-3xl font-bold text-center mb-8">Our Story</h2>
             <div className="prose lg:prose-lg mx-auto text-gray-700">
               <p className="text-lg leading-relaxed mb-6">
-                DreamWeave was born from a simple observation: Malawi's entrepreneurs and consumers 
-                needed a better way to connect, trade, and grow together. Founded in 2024, we started 
-                with a vision to create more than just a marketplace – we wanted to build a platform 
-                that truly understands and serves the unique needs of our community.
+               Your Malawian Marketing Partner Since 2020. Based in Lilongwe, we understand Malawi consumers and effectively connect businessses with their target audience.
               </p>
               <p className="text-lg leading-relaxed mb-6">
                 Our founders, passionate about technology and economic development, recognized that 
