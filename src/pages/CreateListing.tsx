@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -9,26 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from "@/components/ui/switch"
-import { useToast } from "@/hooks/use-toast"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import ImageUpload from '@/components/ImageUpload';
-import { Separator } from "@/components/ui/separator"
-import { Loader2 } from "lucide-react"
 import PayChanguPayment from '@/components/PayChanguPayment';
 import KYCForm from '@/components/KYCForm';
 
@@ -39,7 +26,6 @@ const listingSchema = z.object({
   categoryId: z.string().min(1, 'Category is required'),
   condition: z.string().min(1, 'Condition is required'),
   location: z.string().min(2, 'Location is required'),
-  phone: z.string().min(10, 'Phone number must be at least 10 characters'),
 });
 
 type ListingFormData = z.infer<typeof listingSchema>;
@@ -56,13 +42,11 @@ const CreateListing = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [images, setImages] = useState<string[]>([]);
   const [featuredImage, setFeaturedImage] = useState<string>('');
-  const [isFeatured, setIsFeatured] = useState(false);
-  const [showKYC, setShowKYC] = useState(false);
-  const [userProfile, setUserProfile] = useState<{ kyc_status: 'rejected' | 'pending' | 'verified'; phone: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [isOnlineStore, setIsOnlineStore] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [listingId, setListingId] = useState<string>('');
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [showKYC, setShowKYC] = useState(false);
 
   const {
     register,
@@ -79,34 +63,10 @@ const CreateListing = () => {
       navigate('/auth');
       return;
     }
-
+    
     fetchCategories();
     fetchUserProfile();
   }, [user, navigate]);
-
-  useEffect(() => {
-    const checkKYCStatus = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('kyc_status')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile || profile.kyc_status !== 'verified') {
-        toast({
-          title: "KYC Required",
-          description: "You must complete KYC verification before creating a listing.",
-          variant: "destructive"
-        });
-        navigate('/dashboard');
-      }
-    };
-
-    checkKYCStatus();
-  }, [navigate]);
 
   const fetchCategories = async () => {
     try {
@@ -135,7 +95,7 @@ const CreateListing = () => {
         .from('kyc_submissions')
         .select('status')
         .eq('user_id', user.id)
-        .eq('status', 'verified')
+        .eq('status', 'approved')
         .single();
 
       const { data: profile, error } = await supabase
@@ -146,13 +106,13 @@ const CreateListing = () => {
 
       if (error) throw error;
 
-      // If user has verified KYC but profile hasn't been updated, update it
-      if (kycData && (!profile.is_seller || profile.kyc_status !== 'verified')) {
+      // If user has approved KYC but profile hasn't been updated, update it
+      if (kycData && (!profile.is_seller || profile.kyc_status !== 'approved')) {
         const { error: updateError } = await supabase
           .from('profiles')
           .update({
             is_seller: true,
-            kyc_status: 'verified'
+            kyc_status: 'approved'
           })
           .eq('id', user.id);
 
@@ -173,16 +133,11 @@ const CreateListing = () => {
       }
 
       // Check if user needs KYC for first-time selling
-      if (!kycData && (!profile.is_seller || profile.kyc_status !== 'verified')) {
+      if (!kycData && (!profile.is_seller || profile.kyc_status !== 'approved')) {
         setShowKYC(true);
       }
     } catch (error: any) {
       console.error('Error fetching profile:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch user profile",
-        variant: "destructive"
-      });
     }
   };
 
@@ -196,12 +151,13 @@ const CreateListing = () => {
   const handleImageRemove = (url: string) => {
     setImages(prev => prev.filter(img => img !== url));
     if (featuredImage === url) {
-      setFeaturedImage(images[0] || '');
+      setFeaturedImage(images.find(img => img !== url) || '');
     }
   };
 
   const onSubmit = async (data: ListingFormData) => {
     if (!user) return;
+
     if (images.length === 0) {
       toast({
         title: "Error",
@@ -223,10 +179,8 @@ const CreateListing = () => {
           condition: data.condition,
           location: data.location,
           seller_id: user.id,
-          images: images,
           featured_image: featuredImage,
-          is_featured: isFeatured,
-          is_online_store: isOnlineStore,
+          images: images,
           status: 'draft'
         })
         .select()
@@ -236,6 +190,7 @@ const CreateListing = () => {
 
       setListingId(listing.id);
       setShowPayment(true);
+
     } catch (error: any) {
       toast({
         title: "Error",
@@ -247,223 +202,204 @@ const CreateListing = () => {
     }
   };
 
+  const handlePaymentSuccess = () => {
+    setShowPayment(false);
+    toast({
+      title: "Success",
+      description: "Your listing has been submitted and is pending approval!"
+    });
+    navigate('/dashboard');
+  };
+
   const handleKYCSuccess = () => {
     setShowKYC(false);
     fetchUserProfile();
   };
+
+  if (!user) {
+    return null;
+  }
 
   if (showKYC) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="container mx-auto px-4 py-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Complete KYC Verification</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <KYCForm onSuccess={handleKYCSuccess} />
-            </CardContent>
-          </Card>
+          <KYCForm onSuccess={handleKYCSuccess} />
         </div>
-        <Footer />
       </div>
     );
   }
 
-  if (showPayment) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="container mx-auto px-4 py-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Complete Your Listing</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PayChanguPayment
-                amount={50}
-                onSuccess={() => navigate('/dashboard')}
-                onCancel={() => setShowPayment(false)}
-                listingId={listingId}
-              />
-            </CardContent>
-          </Card>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+  // Calculate listing fee (10% of price)
+  const price = watch('price') || 0;
+  const listingFee = Math.round(price * 0.1);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
+      
       <div className="container mx-auto px-4 py-8">
-        <Card>
+        <Card className="max-w-4xl mx-auto">
           <CardHeader>
             <CardTitle>Create New Listing</CardTitle>
+            <p className="text-sm text-gray-600">
+              Fill out the details below to create your listing. A 10% commission fee will be charged.
+            </p>
           </CardHeader>
+          
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    {...register('title')}
-                    placeholder="Enter listing title"
-                  />
-                  {errors.title && (
-                    <p className="text-sm text-red-500">{errors.title.message}</p>
-                  )}
+            {showPayment ? (
+              <PayChanguPayment
+                amount={listingFee}
+                onSuccess={handlePaymentSuccess}
+                onCancel={() => setShowPayment(false)}
+                listingId={listingId}
+              />
+            ) : (
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Title</Label>
+                      <Input
+                        id="title"
+                        {...register('title')}
+                        placeholder="Enter listing title"
+                      />
+                      {errors.title && (
+                        <p className="text-sm text-red-500">{errors.title.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="categoryId">Category</Label>
+                      <Select onValueChange={(value) => setValue('categoryId', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {errors.categoryId && (
+                        <p className="text-sm text-red-500">{errors.categoryId.message}</p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="price">Price (MWK)</Label>
+                        <Input
+                          id="price"
+                          type="number"
+                          {...register('price', { valueAsNumber: true })}
+                          placeholder="0"
+                        />
+                        {errors.price && (
+                          <p className="text-sm text-red-500">{errors.price.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="condition">Condition</Label>
+                        <Select onValueChange={(value) => setValue('condition', value)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select condition" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="new">New</SelectItem>
+                            <SelectItem value="like_new">Like New</SelectItem>
+                            <SelectItem value="good">Good</SelectItem>
+                            <SelectItem value="fair">Fair</SelectItem>
+                            <SelectItem value="poor">Poor</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {errors.condition && (
+                          <p className="text-sm text-red-500">{errors.condition.message}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="location">Location</Label>
+                      <Input
+                        id="location"
+                        {...register('location')}
+                        placeholder="Enter location"
+                      />
+                      {errors.location && (
+                        <p className="text-sm text-red-500">{errors.location.message}</p>
+                      )}
+                    </div>
+
+                    {price > 0 && (
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <h3 className="font-semibold text-blue-900">Fee Summary</h3>
+                        <div className="text-blue-800 space-y-1">
+                          <p>Listing Price: MWK {price.toLocaleString()}</p>
+                          <p>Commission (10%): MWK {listingFee.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Product Images</Label>
+                      <p className="text-sm text-gray-600">
+                        Upload up to 5 images. The first image will be the featured image.
+                      </p>
+                      <ImageUpload
+                        bucketName="listing-images"
+                        onImageUploaded={handleImageUpload}
+                        onImageRemoved={handleImageRemove}
+                        maxImages={5}
+                        existingImages={images}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="price">Price (MWK)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    {...register('price', { valueAsNumber: true })}
-                    placeholder="Enter price"
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    {...register('description')}
+                    placeholder="Describe your item in detail..."
+                    rows={6}
                   />
-                  {errors.price && (
-                    <p className="text-sm text-red-500">{errors.price.message}</p>
+                  {errors.description && (
+                    <p className="text-sm text-red-500">{errors.description.message}</p>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select
-                    onValueChange={(value) => setValue('categoryId', value)}
+                <div className="flex space-x-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate('/dashboard')}
+                    className="flex-1"
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.categoryId && (
-                    <p className="text-sm text-red-500">{errors.categoryId.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="condition">Condition</Label>
-                  <Select
-                    onValueChange={(value) => setValue('condition', value)}
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={submitting || images.length === 0}
+                    className="flex-1"
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select condition" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="like_new">Like New</SelectItem>
-                      <SelectItem value="good">Good</SelectItem>
-                      <SelectItem value="fair">Fair</SelectItem>
-                      <SelectItem value="poor">Poor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.condition && (
-                    <p className="text-sm text-red-500">{errors.condition.message}</p>
-                  )}
+                    {submitting ? 'Creating...' : 'Create Listing'}
+                  </Button>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    {...register('location')}
-                    placeholder="Enter location"
-                  />
-                  {errors.location && (
-                    <p className="text-sm text-red-500">{errors.location.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    {...register('phone')}
-                    placeholder="Enter phone number"
-                  />
-                  {errors.phone && (
-                    <p className="text-sm text-red-500">{errors.phone.message}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  {...register('description')}
-                  placeholder="Enter detailed description"
-                  className="min-h-[150px]"
-                />
-                {errors.description && (
-                  <p className="text-sm text-red-500">{errors.description.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-4">
-                <Label>Images</Label>
-                <ImageUpload
-                  bucketName="listing-images"
-                  onImageUploaded={handleImageUpload}
-                  onImageRemoved={handleImageRemove}
-                  maxImages={5}
-                  existingImages={images}
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="featured"
-                  checked={isFeatured}
-                  onCheckedChange={setIsFeatured}
-                />
-                <Label htmlFor="featured">Feature this listing</Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="online-store"
-                  checked={isOnlineStore}
-                  onCheckedChange={setIsOnlineStore}
-                />
-                <Label htmlFor="online-store">This is an online store</Label>
-              </div>
-
-              <div className="flex justify-end space-x-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate('/dashboard')}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={submitting}>
-                  {submitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    'Create Listing'
-                  )}
-                </Button>
-              </div>
-            </form>
+              </form>
+            )}
           </CardContent>
         </Card>
       </div>
-      <Footer />
     </div>
   );
 };
