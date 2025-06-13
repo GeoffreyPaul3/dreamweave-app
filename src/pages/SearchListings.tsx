@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,6 +52,7 @@ const SearchListings = () => {
   useEffect(() => {
     fetchCategories();
     fetchListings();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const fetchCategories = async () => {
@@ -197,10 +199,10 @@ const SearchListings = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
                     <Select value={filters.category} onValueChange={(value) => handleFilterChange('category', value)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="All Categories" />
+                        <SelectValue placeholder="All categories" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Categories</SelectItem>
+                        <SelectItem value="">All categories</SelectItem>
                         {categories.map((category) => (
                           <SelectItem key={category.id} value={category.id}>
                             {category.name}
@@ -211,27 +213,29 @@ const SearchListings = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="number"
-                        placeholder="Min"
-                        value={filters.minPrice}
-                        onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Max"
-                        value={filters.maxPrice}
-                        onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                      />
-                    </div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Min Price</label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={filters.minPrice}
+                      onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Max Price</label>
+                    <Input
+                      type="number"
+                      placeholder="Any"
+                      value={filters.maxPrice}
+                      onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                    />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
                     <Input
-                      placeholder="Enter location"
+                      placeholder="City, District"
                       value={filters.location}
                       onChange={(e) => handleFilterChange('location', e.target.value)}
                     />
@@ -241,64 +245,76 @@ const SearchListings = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Condition</label>
                     <Select value={filters.condition} onValueChange={(value) => handleFilterChange('condition', value)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="All Conditions" />
+                        <SelectValue placeholder="Any condition" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Conditions</SelectItem>
+                        <SelectItem value="">Any condition</SelectItem>
                         <SelectItem value="new">New</SelectItem>
-                        <SelectItem value="like_new">Like New</SelectItem>
+                        <SelectItem value="like-new">Like New</SelectItem>
                         <SelectItem value="good">Good</SelectItem>
                         <SelectItem value="fair">Fair</SelectItem>
                         <SelectItem value="poor">Poor</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
 
-                <div className="flex justify-between items-center mt-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
                     <Select value={filters.sortBy} onValueChange={(value) => handleFilterChange('sortBy', value)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Sort by" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="newest">Newest First</SelectItem>
+                        <SelectItem value="newest">Newest</SelectItem>
                         <SelectItem value="price_low">Price: Low to High</SelectItem>
                         <SelectItem value="price_high">Price: High to Low</SelectItem>
                         <SelectItem value="popular">Most Popular</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button variant="outline" onClick={resetFilters}>
-                    Reset Filters
-                  </Button>
+
+                  <div className="md:col-span-2 lg:col-span-2 flex items-end">
+                    <Button variant="outline" onClick={resetFilters} className="w-full">
+                      Reset Filters
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           )}
+        </div>
 
-          {/* Results */}
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading listings...</p>
+        {/* Results */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-300 aspect-square rounded-lg mb-4"></div>
+                <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                <div className="h-4 bg-gray-300 rounded mb-2 w-3/4"></div>
+                <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        ) : listings.length > 0 ? (
+          <>
+            <div className="mb-6">
+              <p className="text-gray-600">{listings.length} products found</p>
             </div>
-          ) : listings.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {listings.map((listing) => (
                 <ListingCard key={listing.id} listing={listing} />
               ))}
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-600">No listings found matching your criteria.</p>
-              <Button variant="outline" onClick={resetFilters} className="mt-4">
-                Reset Filters
-              </Button>
-            </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No products found matching your criteria.</p>
+            <Button variant="outline" onClick={resetFilters} className="mt-4">
+              Clear filters
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
