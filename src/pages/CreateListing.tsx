@@ -18,6 +18,7 @@ import Header from '@/components/Header';
 import ImageUpload from '@/components/ImageUpload';
 import PayChanguPayment from '@/components/PayChanguPayment';
 import KYCForm from '@/components/KYCForm';
+import { sendListingSubmittedEmail } from '@/lib/email';
 
 const listingSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
@@ -187,6 +188,22 @@ const CreateListing = () => {
         .single();
 
       if (error) throw error;
+
+      // Get user email and name for notification
+      const { data: userData } = await supabase
+        .from('profiles')
+        .select('email, full_name')
+        .eq('id', user.id)
+        .single();
+
+      if (userData) {
+        await sendListingSubmittedEmail(
+          userData.email,
+          userData.full_name,
+          data.title,
+          listing.id
+        );
+      }
 
       setListingId(listing.id);
       setShowPayment(true);

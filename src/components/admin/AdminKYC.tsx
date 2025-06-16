@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, Check, X, Download } from 'lucide-react';
+import { sendKYCVerifiedEmail } from '@/lib/email';
 
 interface KYCSubmission {
   id: string;
@@ -107,6 +108,17 @@ const AdminKYC = () => {
         .eq('id', submission.user_id);
 
       if (profileError) throw profileError;
+
+      // Get user email and name for notification
+      const { data: userData } = await supabase
+        .from('profiles')
+        .select('email, full_name')
+        .eq('id', submission.user_id)
+        .single();
+
+      if (userData) {
+        await sendKYCVerifiedEmail(userData.email, userData.full_name);
+      }
 
       toast({
         title: "Success",

@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { CheckCircle, XCircle, Trash2, Eye } from 'lucide-react';
+import { sendListingVerifiedEmail } from '@/lib/email';
 
 interface Listing {
   id: string;
@@ -96,25 +97,44 @@ const AdminListings = () => {
           description: "Listing deleted successfully"
         });
       } else {
-        const updateData: any = {
-          admin_approved: action === 'approve',
-          admin_approved_by: user.id,
-          admin_approved_at: new Date().toISOString(),
-          status: action === 'approve' ? 'active' : 'rejected'
-        };
-
         const { error } = await supabase
           .from('listings')
-          .update(updateData)
+          .update({ status: action === 'approve' ? 'active' : 'rejected' })
           .eq('id', listingId);
 
         if (error) throw error;
-        
-        toast({
-          title: "Success",
-          description: `Listing ${action}d successfully`
-        });
+
+        // If listing is approved, send email notification
+        if (action === 'approve') {
+          const { data: listingData } = await supabase
+            .from('listings')
+            .select('title, seller_id')
+            .eq('id', listingId)
+            .single();
+
+          if (listingData) {
+            const { data: userData } = await supabase
+              .from('profiles')
+              .select('email, full_name')
+              .eq('id', listingData.seller_id)
+              .single();
+
+            if (userData) {
+              await sendListingVerifiedEmail(
+                userData.email,
+                userData.full_name,
+                listingData.title,
+                listingId
+              );
+            }
+          }
+        }
       }
+
+      toast({
+        title: "Success",
+        description: `Listing ${action}ed successfully`
+      });
 
       fetchListings();
     } catch (error: any) {
