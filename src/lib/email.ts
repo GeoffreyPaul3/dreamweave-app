@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
+const resend = new Resend(import.meta.env.VITE_RESEND_API_KEY);
 
 export const sendEmail = async ({
   to,
@@ -37,7 +37,7 @@ export const sendKYCVerifiedEmail = async (userEmail: string, userName: string) 
     <h1>Congratulations ${userName}!</h1>
     <p>Your KYC verification has been approved. You can now start selling on DreamWeave.</p>
     <p>Start creating your first listing and reach thousands of potential buyers!</p>
-    <a href="${process.env.NEXT_PUBLIC_SITE_URL}/create-listing" style="
+    <a href="${import.meta.env.VITE_SITE_URL}/create-listing" style="
       display: inline-block;
       background-color: #4F46E5;
       color: white;
@@ -62,7 +62,7 @@ export const sendListingSubmittedEmail = async (
     <h1>Thank you for listing on DreamWeave!</h1>
     <p>Your listing "${listingTitle}" has been submitted successfully and is pending review.</p>
     <p>We'll notify you once your listing is approved.</p>
-    <a href="${process.env.NEXT_PUBLIC_SITE_URL}/listing/${listingId}" style="
+    <a href="${import.meta.env.VITE_SITE_URL}/listing/${listingId}" style="
       display: inline-block;
       background-color: #4F46E5;
       color: white;
@@ -87,7 +87,7 @@ export const sendListingVerifiedEmail = async (
     <h1>Great news ${userName}!</h1>
     <p>Your listing "${listingTitle}" has been approved and is now live on DreamWeave.</p>
     <p>Start receiving messages from potential buyers!</p>
-    <a href="${process.env.NEXT_PUBLIC_SITE_URL}/listing/${listingId}" style="
+    <a href="${import.meta.env.VITE_SITE_URL}/listing/${listingId}" style="
       display: inline-block;
       background-color: #4F46E5;
       color: white;
