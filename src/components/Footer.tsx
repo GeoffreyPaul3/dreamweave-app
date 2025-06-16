@@ -22,9 +22,9 @@ const Footer = () => {
               Connecting buyers and sellers across the warm heart of Africa. Your trusted marketplace for quality products and services.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Facebook</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Twitter</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Instagram</a>
+              <a href="https://www.facebook.com/share/1JetZrGaa4/?mibextid=wwXIfr" className="text-gray-400 hover:text-white transition-colors">Facebook</a>
+              <a href="https://x.com/dreamweave265?s=21" className="text-gray-400 hover:text-white transition-colors">Twitter/ X</a>
+              <a href="https://www.instagram.com/dreamweave265?igsh=MXRqNWRtNmVvcDFtcQ%3D%3D&utm_source=qr" className="text-gray-400 hover:text-white transition-colors">Instagram</a>
             </div>
           </div>
 
@@ -59,11 +59,11 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <MapPin className="w-5 h-5 text-gray-400" />
-                <span className="text-gray-300">Lilongwe, Malawi</span>
+                <span className="text-gray-300">Dubai Baniyas, Union, Fish Around About, UAE</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-gray-400" />
-                <span className="text-gray-300">+265 992 74 77 93</span>
+                <span className="text-gray-300">+97 155 172 93 07</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-gray-400" />
@@ -77,12 +77,12 @@ const Footer = () => {
         <div className="border-t border-gray-800 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
-              © 2024 DreamWeave Marketplace. All rights reserved.
+            &copy; {new Date().getFullYear()} DreamWeave Marketplace. All rights reserved.
             </p>
             <div className="flex items-center space-x-1 text-gray-400 text-sm mt-4 md:mt-0">
               <span>Made with</span>
               <Heart className="w-4 h-4 text-red-500" />
-              <span>in Malawi</span>
+              <span>by Gtiger.</span>
             </div>
           </div>
         </div>
