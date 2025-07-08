@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import AdminKYC from '@/components/admin/AdminKYC';
 import AdminListings from '@/components/admin/AdminListings';
+import AdminBanners from '@/components/admin/AdminBanners';
 import { Users, FileText, DollarSign, CheckCircle } from 'lucide-react';
 
 interface DashboardStats {
@@ -206,9 +207,10 @@ const AdminDashboard = () => {
 
         {/* Admin Tabs */}
         <Tabs defaultValue="listings" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="listings">Manage Listings</TabsTrigger>
             <TabsTrigger value="kyc">KYC Verification</TabsTrigger>
+            <TabsTrigger value="banners">Banners</TabsTrigger>
           </TabsList>
           
           <TabsContent value="listings" className="mt-6">
@@ -217,6 +219,10 @@ const AdminDashboard = () => {
           
           <TabsContent value="kyc" className="mt-6">
             <AdminKYC />
+          </TabsContent>
+
+          <TabsContent value="banners" className="mt-6">
+            <AdminBanners />
           </TabsContent>
         </Tabs>
       </div>

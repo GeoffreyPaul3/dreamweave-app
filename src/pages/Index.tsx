@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
@@ -6,6 +5,7 @@ import CategoryGrid from '@/components/CategoryGrid';
 import FeaturedProducts from '@/components/FeaturedProducts';
 import TrustSection from '@/components/TrustSection';
 import Footer from '@/components/Footer';
+import BannerSlideshow from '@/components/BannerSlideshow';
 
 const Index = () => {
   const { loading } = useAuth();
@@ -29,6 +29,7 @@ const Index = () => {
       <HeroSection />
       <CategoryGrid />
       <FeaturedProducts />
+      <BannerSlideshow />
       <TrustSection />
       <Footer />
     </div>
