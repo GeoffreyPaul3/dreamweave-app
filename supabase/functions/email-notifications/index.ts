@@ -3,7 +3,7 @@
 // Email notification edge function for Supabase
 
 // @ts-expect-error Deno global is provided by the runtime
-const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+const RESEND_API_KEY = Deno.env.get('VITE_RESEND_API_KEY');
 // @ts-expect-error Deno global is provided by the runtime
 const SITE_URL = Deno.env.get('SITE_URL') || 'https://dreamweave.mw';
 const FROM_EMAIL = 'DreamWeave <notifications@dreamweave.mw>';
