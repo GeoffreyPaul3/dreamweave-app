@@ -3,7 +3,7 @@
 // Email notification edge function for new messages
 
 // @ts-expect-error Deno global is provided by the runtime
-const RESEND_API_KEY = Deno.env.get('VITE_RESEND_API_KEY');
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 const FROM_EMAIL = 'DreamWeave <notifications@dreamweave.mw>';
 
 async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
