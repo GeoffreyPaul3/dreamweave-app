@@ -50,7 +50,6 @@ const FeaturedProducts = () => {
           )
         `)
         .eq('status', 'active')
-        .eq('admin_approved', true)
         .eq('payment_verified', true)
         .order('views', { ascending: false })
         .limit(8);

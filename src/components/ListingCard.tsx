@@ -102,6 +102,15 @@ const ListingCard = ({ listing, onMessage }: ListingCardProps) => {
     return 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop';
   };
 
+  const handleViewDetails = async () => {
+    // Increment view count in the database
+    await supabase
+      .from('listings')
+      .update({ views: (listing.views || 0) + 1 })
+      .eq('id', listing.id);
+    navigate(`/listing/${listing.id}`);
+  };
+
   return (
     <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden">
       <div className="relative">
@@ -123,15 +132,6 @@ const ListingCard = ({ listing, onMessage }: ListingCardProps) => {
           </div>
         </div>
         
-        <Button
-          variant="ghost"
-          size="icon"
-          className={`absolute top-3 right-3 ${isFavorited ? 'bg-red-500 text-white' : 'bg-white/80'} hover:bg-white transition-colors`}
-          onClick={handleFavorite}
-          disabled={isLoading}
-        >
-          <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
-        </Button>
       </div>
 
       <div className="p-4 space-y-3">
@@ -141,11 +141,6 @@ const ListingCard = ({ listing, onMessage }: ListingCardProps) => {
         
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold text-primary">{formatPrice(listing.price)}</span>
-          <div className="flex items-center space-x-1">
-            <Star className="w-4 h-4 text-yellow-400 fill-current" />
-            <span className="text-sm text-gray-600">{listing.profiles?.rating || 0}</span>
-            <span className="text-sm text-gray-400">({listing.profiles?.total_reviews || 0})</span>
-          </div>
         </div>
         
         <div className="flex items-center text-sm text-gray-500">
@@ -160,15 +155,10 @@ const ListingCard = ({ listing, onMessage }: ListingCardProps) => {
         <div className="flex space-x-2">
           <Button 
             className="flex-1 group-hover:bg-primary group-hover:text-white transition-colors"
-            onClick={() => navigate(`/listing/${listing.id}`)}
+            onClick={handleViewDetails}
           >
             View Details
           </Button>
-          {user && user.id !== listing.seller_id && (
-            <Button variant="outline" size="icon" onClick={onMessage}>
-              <MessageCircle className="w-4 h-4" />
-            </Button>
-          )}
         </div>
       </div>
     </Card>

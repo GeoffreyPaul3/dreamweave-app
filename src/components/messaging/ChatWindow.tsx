@@ -132,6 +132,19 @@ const ChatWindow = ({ conversationId, otherParticipant }: ChatWindowProps) => {
 
       if (error) throw error;
       setNewMessage('');
+
+      // Call edge function to send email notification to seller
+      await fetch('/functions/v1/message-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'new_message',
+          sellerId: otherParticipant.id,
+          sellerName: otherParticipant.full_name,
+          buyerName: user.user_metadata?.full_name || user.email,
+          message: newMessage.trim()
+        })
+      });
     } catch (error) {
       console.error('Error sending message:', error);
     } finally {
