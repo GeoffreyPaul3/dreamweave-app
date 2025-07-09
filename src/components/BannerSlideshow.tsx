@@ -9,6 +9,7 @@ const BANNER_BUCKET = 'banners';
 const BannerSlideshow = () => {
   const [banners, setBanners] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [carouselApi, setCarouselApi] = useState<any>(null);
 
   const fetchBanners = async () => {
     const { data, error } = await supabase.storage.from(BANNER_BUCKET).list('', { limit: 20 });
@@ -31,6 +32,21 @@ const BannerSlideshow = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Auto-slide effect
+  useEffect(() => {
+    if (!carouselApi || !banners.length) return;
+    const interval = setInterval(() => {
+      if (carouselApi) {
+        if (carouselApi.canScrollNext()) {
+          carouselApi.scrollNext();
+        } else {
+          carouselApi.scrollTo(0); // Loop to first slide
+        }
+      }
+    }, 4000); // 4 seconds per slide
+    return () => clearInterval(interval);
+  }, [carouselApi, banners.length]);
+
   if (loading) {
     return (
       <section className="py-8">
@@ -48,7 +64,7 @@ const BannerSlideshow = () => {
   return (
     <section className="py-8">
       <div className="container mx-auto px-4">
-        <Carousel className="relative rounded-xl overflow-hidden shadow-lg">
+        <Carousel className="relative rounded-xl overflow-hidden shadow-lg" setApi={setCarouselApi}>
           <CarouselContent>
             <AnimatePresence initial={false}>
               {banners.map((url, idx) => (
