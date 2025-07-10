@@ -81,8 +81,26 @@ function listingSubmittedHtml(userName: string, listingTitle: string, listingId:
 }
 
 Deno.serve(async (req: Request) => {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
+  }
+
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
   }
   let body: any;
   try {
@@ -101,31 +119,31 @@ Deno.serve(async (req: Request) => {
         subject: 'Your KYC Verification is Complete!',
         html: kycApprovedHtml(userName),
       });
-      return new Response(JSON.stringify({ success: true, message: 'KYC approval email sent' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ success: true, message: 'KYC approval email sent' }), { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
     } else if (event === 'listing_approved') {
       if (!listingTitle || !listingId) {
-        return new Response(JSON.stringify({ error: 'Missing listingTitle or listingId' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ error: 'Missing listingTitle or listingId' }), { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
       }
       await sendEmail({
         to: userEmail,
         subject: 'Your Listing Has Been Approved!',
         html: listingApprovedHtml(userName, listingTitle, listingId),
       });
-      return new Response(JSON.stringify({ success: true, message: 'Listing approval email sent' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ success: true, message: 'Listing approval email sent' }), { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
     } else if (event === 'listing_submitted') {
       if (!listingTitle || !listingId) {
-        return new Response(JSON.stringify({ error: 'Missing listingTitle or listingId' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ error: 'Missing listingTitle or listingId' }), { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
       }
       await sendEmail({
         to: userEmail,
         subject: 'Your Listing Has Been Submitted!',
         html: listingSubmittedHtml(userName, listingTitle, listingId),
       });
-      return new Response(JSON.stringify({ success: true, message: 'Listing submission email sent' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ success: true, message: 'Listing submission email sent' }), { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
     } else {
-      return new Response(JSON.stringify({ error: 'Unknown event type' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Unknown event type' }), { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
     }
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message || 'Failed to send email' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message || 'Failed to send email' }), { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
   }
 }); 
