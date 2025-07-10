@@ -195,8 +195,10 @@ const CreateListing = () => {
         .eq('id', user.id)
         .single();
 
+      const EMAIL_FUNCTION_URL = import.meta.env.VITE_EMAIL_FUNCTION_URL || 'http://localhost:54321/functions/v1';
+
       if (userData) {
-        await fetch('/functions/v1/email-notifications', {
+        await fetch(`${EMAIL_FUNCTION_URL}/email-notifications`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

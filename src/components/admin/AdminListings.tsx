@@ -119,7 +119,8 @@ const AdminListings = () => {
               .single();
 
             if (userData) {
-              await fetch('/functions/v1/email-notifications', {
+              const EMAIL_FUNCTION_URL = import.meta.env.VITE_EMAIL_FUNCTION_URL || 'http://localhost:54321/functions/v1';
+              await fetch(`${EMAIL_FUNCTION_URL}/email-notifications`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
