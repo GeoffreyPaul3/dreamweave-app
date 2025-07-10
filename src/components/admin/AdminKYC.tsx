@@ -117,7 +117,15 @@ const AdminKYC = () => {
         .single();
 
       if (userData) {
-        await sendKYCVerifiedEmail(userData.email, userData.full_name);
+        await fetch('/functions/v1/email-notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'kyc_approved',
+            userEmail: userData.email,
+            userName: userData.full_name
+          })
+        });
       }
 
       toast({

@@ -197,12 +197,17 @@ const CreateListing = () => {
         .single();
 
       if (userData) {
-        await sendListingSubmittedEmail(
-          userData.email,
-          userData.full_name,
-          data.title,
-          listing.id
-        );
+        await fetch('/functions/v1/email-notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'listing_submitted',
+            userEmail: userData.email,
+            userName: userData.full_name,
+            listingTitle: data.title,
+            listingId: listing.id
+          })
+        });
       }
 
       setListingId(listing.id);

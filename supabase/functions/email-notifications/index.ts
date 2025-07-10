@@ -63,6 +63,23 @@ function listingApprovedHtml(userName: string, listingTitle: string, listingId: 
   `;
 }
 
+function listingSubmittedHtml(userName: string, listingTitle: string, listingId: string) {
+  return `
+    <h1>Thank you for listing on DreamWeave!</h1>
+    <p>Your listing "${listingTitle}" has been submitted successfully and is pending review.</p>
+    <p>We'll notify you once your listing is approved.</p>
+    <a href="${SITE_URL}/listing/${listingId}" style="
+      display: inline-block;
+      background-color: #4F46E5;
+      color: white;
+      padding: 12px 24px;
+      text-decoration: none;
+      border-radius: 4px;
+      margin-top: 16px;
+    ">View Your Listing</a>
+  `;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: { 'Content-Type': 'application/json' } });
@@ -95,6 +112,16 @@ Deno.serve(async (req: Request) => {
         html: listingApprovedHtml(userName, listingTitle, listingId),
       });
       return new Response(JSON.stringify({ success: true, message: 'Listing approval email sent' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    } else if (event === 'listing_submitted') {
+      if (!listingTitle || !listingId) {
+        return new Response(JSON.stringify({ error: 'Missing listingTitle or listingId' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      }
+      await sendEmail({
+        to: userEmail,
+        subject: 'Your Listing Has Been Submitted!',
+        html: listingSubmittedHtml(userName, listingTitle, listingId),
+      });
+      return new Response(JSON.stringify({ success: true, message: 'Listing submission email sent' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     } else {
       return new Response(JSON.stringify({ error: 'Unknown event type' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }

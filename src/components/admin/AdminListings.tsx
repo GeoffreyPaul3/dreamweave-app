@@ -120,12 +120,17 @@ const AdminListings = () => {
               .single();
 
             if (userData) {
-              await sendListingVerifiedEmail(
-                userData.email,
-                userData.full_name,
-                listingData.title,
-                listingId
-              );
+              await fetch('/functions/v1/email-notifications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  event: 'listing_approved',
+                  userEmail: userData.email,
+                  userName: userData.full_name,
+                  listingTitle: listingData.title,
+                  listingId: listingId
+                })
+              });
             }
           }
         }
