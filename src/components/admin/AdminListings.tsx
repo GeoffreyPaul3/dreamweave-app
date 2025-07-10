@@ -8,7 +8,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { CheckCircle, XCircle, Trash2, Eye } from 'lucide-react';
-import { sendListingVerifiedEmail } from '@/lib/email';
 
 interface Listing {
   id: string;

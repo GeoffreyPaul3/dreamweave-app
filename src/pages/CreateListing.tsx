@@ -18,7 +18,6 @@ import Header from '@/components/Header';
 import ImageUpload from '@/components/ImageUpload';
 import PayChanguPayment from '@/components/PayChanguPayment';
 import KYCForm from '@/components/KYCForm';
-import { sendListingSubmittedEmail } from '@/lib/email';
 
 const listingSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
