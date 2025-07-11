@@ -6,7 +6,7 @@
 // @ts-expect-error Deno global is provided by the runtime
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 // @ts-expect-error Deno global is provided by the runtime
-const SITE_URL = Deno.env.get('SITE_URL') || 'https://dreamweave.mw';
+const SITE_URL = Deno.env.get('SITE_URL') || 'https://dreamweavemw.com';
 export {};
 
 async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
@@ -17,7 +17,7 @@ async function sendEmail({ to, subject, html }: { to: string; subject: string; h
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'DreamWeave <notifications@dreamweave.mw>',
+      from: 'DreamWeave <notifications@dreamweavemw.com>',
       to,
       subject,
       html,

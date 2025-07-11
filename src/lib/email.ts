@@ -13,7 +13,7 @@ export const sendEmail = async ({
 }) => {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'DreamWeave <notifications@dreamweave.mw>',
+      from: 'DreamWeave <notifications@dreamweavemw.com>',
       to,
       subject,
       html,
