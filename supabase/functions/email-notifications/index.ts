@@ -119,7 +119,7 @@ function listingSubmittedHtml(userName: string, listingTitle: string, listingId:
   `;
 }
 
-Deno.serve(async (req: Request) => {
+globalThis.Deno?.serve?.(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, {
