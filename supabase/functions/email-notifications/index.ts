@@ -173,12 +173,13 @@ globalThis.Deno?.serve?.(async (req: Request) => {
       if (!listingTitle || !listingId) {
         return new Response(JSON.stringify({ error: 'Missing listingTitle or listingId' }), { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
       }
+      // Send the "listing approved" email instead of "listing submitted"
       await sendEmail({
         to: userEmail,
-        subject: 'Your Listing Has Been Submitted!',
-        html: listingSubmittedHtml(userName, listingTitle, listingId),
+        subject: 'Your Listing is Now Live!',
+        html: listingApprovedHtml(userName, listingTitle, listingId), // <-- use the approved template
       });
-      return new Response(JSON.stringify({ success: true, message: 'Listing submission email sent' }), { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
+      return new Response(JSON.stringify({ success: true, message: 'Listing live email sent' }), { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
     } else {
       return new Response(JSON.stringify({ error: 'Unknown event type' }), { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
     }
