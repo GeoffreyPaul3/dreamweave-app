@@ -24,6 +24,7 @@ async function sendEmail({ to, subject, html }: { to: string; subject: string; h
   });
   const data = await res.json();
   if (!res.ok) {
+    // Add this log for debugging
     console.log("Resend API error:", data, "Status:", res.status);
     throw new Error(data.error || JSON.stringify(data) || 'Failed to send email');
   }
@@ -145,6 +146,7 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: 'Unknown event type' }), { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
     }
   } catch (error: any) {
+    // Add this log for debugging
     console.log("Email function error:", error);
     return new Response(JSON.stringify({ error: error.message || 'Failed to send email' }), { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
   }
