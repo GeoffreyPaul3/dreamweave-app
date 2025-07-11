@@ -7,7 +7,7 @@
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 // @ts-expect-error Deno global is provided by the runtime
 const SITE_URL = Deno.env.get('SITE_URL') || 'https://dreamweave.mw';
-const FROM_EMAIL = 'DreamWeave <notifications@dreamweave.mw>';
+export {};
 
 async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
   const res = await fetch('https://api.resend.com/emails', {
@@ -17,7 +17,7 @@ async function sendEmail({ to, subject, html }: { to: string; subject: string; h
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: FROM_EMAIL,
+      from: 'DreamWeave <notifications@dreamweave.mw>',
       to,
       subject,
       html,
@@ -33,35 +33,72 @@ async function sendEmail({ to, subject, html }: { to: string; subject: string; h
 
 function kycApprovedHtml(userName: string) {
   return `
-    <h1>Congratulations ${userName}!</h1>
-    <p>Your KYC verification has been approved. You can now start selling on DreamWeave.</p>
-    <p>Start creating your first listing and reach thousands of potential buyers!</p>
-    <a href="${SITE_URL}/create-listing" style="
-      display: inline-block;
-      background-color: #4F46E5;
-      color: white;
-      padding: 12px 24px;
-      text-decoration: none;
-      border-radius: 4px;
-      margin-top: 16px;
-    ">Create Your First Listing</a>
+  <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #f4f8fb; padding: 32px;">
+    <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(79,70,229,0.08); padding: 32px;">
+      <img src="https://dreamweave.mw/logo.png" alt="DreamWeave" style="width: 48px; display: block; margin: 0 auto 16px;" />
+      <h1 style="color: #1e293b; text-align: center; margin-bottom: 8px;">Congratulations, ${userName}!</h1>
+      <p style="color: #334155; text-align: center; font-size: 1.1em; margin-bottom: 24px;">
+        Your KYC verification has been <b style="color: #22c55e;">approved</b>.<br>
+        You can now start selling on DreamWeave!
+      </p>
+      <p style="color: #64748b; text-align: center; margin-bottom: 32px;">
+        Start creating your first listing and reach thousands of potential buyers.
+      </p>
+      <div style="text-align: center;">
+        <a href="${SITE_URL}/create-listing" style="
+          display: inline-block;
+          background: linear-gradient(90deg, #4F46E5 0%, #2563eb 100%);
+          color: #fff;
+          font-weight: 600;
+          padding: 14px 32px;
+          border-radius: 6px;
+          text-decoration: none;
+          font-size: 1.1em;
+          box-shadow: 0 2px 8px rgba(79,70,229,0.12);
+          transition: background 0.2s;
+        ">Create Your First Listing</a>
+      </div>
+      <hr style="margin: 32px 0; border: none; border-top: 1px solid #e2e8f0;">
+      <p style="color: #94a3b8; text-align: center; font-size: 0.95em;">
+        Need help? <a href="${SITE_URL}/contact" style="color: #4F46E5; text-decoration: underline;">Contact Support</a>
+      </p>
+    </div>
+  </div>
   `;
 }
 
 function listingApprovedHtml(userName: string, listingTitle: string, listingId: string) {
   return `
-    <h1>Great news ${userName}!</h1>
-    <p>Your listing "${listingTitle}" has been approved and is now live on DreamWeave.</p>
-    <p>Start receiving messages from potential buyers!</p>
-    <a href="${SITE_URL}/listing/${listingId}" style="
-      display: inline-block;
-      background-color: #4F46E5;
-      color: white;
-      padding: 12px 24px;
-      text-decoration: none;
-      border-radius: 4px;
-      margin-top: 16px;
-    ">View Your Listing</a>
+  <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #f4f8fb; padding: 32px;">
+    <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(79,70,229,0.08); padding: 32px;">
+      <img src="https://dreamweave.mw/logo.png" alt="DreamWeave" style="width: 48px; display: block; margin: 0 auto 16px;" />
+      <h1 style="color: #1e293b; text-align: center; margin-bottom: 8px;">Great news, ${userName}!</h1>
+      <p style="color: #334155; text-align: center; font-size: 1.1em; margin-bottom: 24px;">
+        Your listing <b style="color: #4F46E5;">"${listingTitle}"</b> has been <b style="color: #22c55e;">approved</b> and is now live on DreamWeave.
+      </p>
+      <p style="color: #64748b; text-align: center; margin-bottom: 32px;">
+        Start receiving messages from potential buyers!
+      </p>
+      <div style="text-align: center;">
+        <a href="${SITE_URL}/listing/${listingId}" style="
+          display: inline-block;
+          background: linear-gradient(90deg, #4F46E5 0%, #2563eb 100%);
+          color: #fff;
+          font-weight: 600;
+          padding: 14px 32px;
+          border-radius: 6px;
+          text-decoration: none;
+          font-size: 1.1em;
+          box-shadow: 0 2px 8px rgba(79,70,229,0.12);
+          transition: background 0.2s;
+        ">View Your Listing</a>
+      </div>
+      <hr style="margin: 32px 0; border: none; border-top: 1px solid #e2e8f0;">
+      <p style="color: #94a3b8; text-align: center; font-size: 0.95em;">
+        Need help? <a href="${SITE_URL}/contact" style="color: #4F46E5; text-decoration: underline;">Contact Support</a>
+      </p>
+    </div>
+  </div>
   `;
 }
 
