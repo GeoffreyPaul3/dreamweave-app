@@ -179,6 +179,34 @@ const AdminKYC = () => {
 
       if (kycError) throw kycError;
 
+      // Get user email and name for notification
+      const { data: userData } = await supabase
+        .from('profiles')
+        .select('email, full_name')
+        .eq('id', submission.user_id)
+        .single();
+
+      const EMAIL_FUNCTION_URL = import.meta.env.VITE_EMAIL_FUNCTION_URL || 'http://localhost:54321/functions/v1';
+
+      if (userData) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const jwt = sessionData?.session?.access_token;
+
+        await fetch(`${EMAIL_FUNCTION_URL}/email-notifications`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${jwt}`,
+          },
+          body: JSON.stringify({
+            event: 'kyc_rejected',
+            userEmail: userData.email,
+            userName: userData.full_name,
+            reason: rejectionReason // make sure this variable holds the rejection reason
+          })
+        });
+      }
+
       toast({
         title: "Success",
         description: "KYC submission rejected successfully"

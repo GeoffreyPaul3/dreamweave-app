@@ -119,6 +119,43 @@ function listingSubmittedHtml(userName: string, listingTitle: string, listingId:
   `;
 }
 
+function kycRejectedHtml(userName: string, reason?: string) {
+  return `
+  <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #f4f8fb; padding: 32px;">
+    <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(239,68,68,0.08); padding: 32px;">
+      <img src="https://dreamweave.mw/logo.png" alt="DreamWeave" style="width: 48px; display: block; margin: 0 auto 16px;" />
+      <h1 style="color: #ef4444; text-align: center; margin-bottom: 8px;">KYC Rejected</h1>
+      <p style="color: #334155; text-align: center; font-size: 1.1em; margin-bottom: 24px;">
+        Hi ${userName},<br>
+        Unfortunately, your KYC verification was <b style="color: #ef4444;">not approved</b>.
+      </p>
+      ${reason ? `<p style="color: #64748b; text-align: center; margin-bottom: 32px;">Reason: <b>${reason}</b></p>` : ''}
+      <p style="color: #64748b; text-align: center; margin-bottom: 32px;">
+        Please review your submission and try again. If you need help, contact our support team.
+      </p>
+      <div style="text-align: center;">
+        <a href="${SITE_URL}/kyc" style="
+          display: inline-block;
+          background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+          color: #fff;
+          font-weight: 600;
+          padding: 14px 32px;
+          border-radius: 6px;
+          text-decoration: none;
+          font-size: 1.1em;
+          box-shadow: 0 2px 8px rgba(239,68,68,0.12);
+          transition: background 0.2s;
+        ">Resubmit KYC</a>
+      </div>
+      <hr style="margin: 32px 0; border: none; border-top: 1px solid #e2e8f0;">
+      <p style="color: #94a3b8; text-align: center; font-size: 0.95em;">
+        Need help? <a href="${SITE_URL}/contact" style="color: #ef4444; text-decoration: underline;">Contact Support</a>
+      </p>
+    </div>
+  </div>
+  `;
+}
+
 globalThis.Deno?.serve?.(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -159,6 +196,13 @@ globalThis.Deno?.serve?.(async (req: Request) => {
         html: kycApprovedHtml(userName),
       });
       return new Response(JSON.stringify({ success: true, message: 'KYC approval email sent' }), { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
+    } else if (event === 'kyc_rejected') {
+      await sendEmail({
+        to: userEmail,
+        subject: 'Your KYC Verification Was Not Approved',
+        html: kycRejectedHtml(userName, body.reason),
+      });
+      return new Response(JSON.stringify({ success: true, message: 'KYC rejection email sent' }), { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
     } else if (event === 'listing_approved') {
       if (!listingTitle || !listingId) {
         return new Response(JSON.stringify({ error: 'Missing listingTitle or listingId' }), { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
