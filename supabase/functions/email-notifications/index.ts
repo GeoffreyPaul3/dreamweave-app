@@ -35,7 +35,7 @@ function kycApprovedHtml(userName: string) {
   return `
   <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #f4f8fb; padding: 32px;">
     <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(79,70,229,0.08); padding: 32px;">
-      <img src="https://dreamweave.mw/logo.png" alt="DreamWeave" style="width: 48px; display: block; margin: 0 auto 16px;" />
+      <img src="/dreamweave-logo.png" alt="DreamWeave" style="width: 48px; display: block; margin: 0 auto 16px;" />
       <h1 style="color: #1e293b; text-align: center; margin-bottom: 8px;">Congratulations, ${userName}!</h1>
       <p style="color: #334155; text-align: center; font-size: 1.1em; margin-bottom: 24px;">
         Your KYC verification has been <b style="color: #22c55e;">approved</b>.<br>
@@ -71,7 +71,7 @@ function listingApprovedHtml(userName: string, listingTitle: string, listingId: 
   return `
   <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #f4f8fb; padding: 32px;">
     <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(79,70,229,0.08); padding: 32px;">
-      <img src="https://dreamweave.mw/logo.png" alt="DreamWeave" style="width: 48px; display: block; margin: 0 auto 16px;" />
+      <img src="/dreamweave-logo.png" alt="DreamWeave" style="width: 48px; display: block; margin: 0 auto 16px;" />
       <h1 style="color: #1e293b; text-align: center; margin-bottom: 8px;">Great news, ${userName}!</h1>
       <p style="color: #334155; text-align: center; font-size: 1.1em; margin-bottom: 24px;">
         Your listing <b style="color: #4F46E5;">"${listingTitle}"</b> has been <b style="color: #22c55e;">approved</b> and is now live on DreamWeave.
