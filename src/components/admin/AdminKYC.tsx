@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -118,9 +119,16 @@ const AdminKYC = () => {
       const EMAIL_FUNCTION_URL = import.meta.env.VITE_EMAIL_FUNCTION_URL || 'http://localhost:54321/functions/v1';
 
       if (userData) {
+        // Get the user's JWT for the Authorization header
+        const { data: sessionData } = await supabase.auth.getSession();
+        const jwt = sessionData?.session?.access_token;
+
         await fetch(`${EMAIL_FUNCTION_URL}/email-notifications`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${jwt}`,
+          },
           body: JSON.stringify({
             event: 'kyc_approved',
             userEmail: userData.email,
