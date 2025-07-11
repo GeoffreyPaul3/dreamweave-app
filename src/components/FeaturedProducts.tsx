@@ -51,10 +51,13 @@ const FeaturedProducts = () => {
         `)
         .eq('status', 'active')
         .eq('payment_verified', true)
-        .order('views', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(8);
 
       if (error) throw error;
+      if (data) {
+        data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      }
       setListings(data || []);
     } catch (error) {
       console.error('Error fetching listings:', error);
