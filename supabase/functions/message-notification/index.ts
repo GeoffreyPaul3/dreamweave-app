@@ -80,7 +80,7 @@ Deno.serve(async (req: Request) => {
       <h1>Hello ${sellerName},</h1>
       <p>You have received a new message from <strong>${buyerName}</strong>:</p>
       <blockquote style="background:#f3f3f3;padding:12px;border-radius:6px;">${message}</blockquote>
-      <p>Reply to this message in your <a href="https://dreamweave.mw/messages">DreamWeave inbox</a>.</p>
+      <p>Reply to this message in your <a href="https://dreamweavemw.com/messages">DreamWeave inbox</a>.</p>
     `;
     await sendEmail({ to: sellerEmail, subject, html });
     return new Response(JSON.stringify({ success: true, message: 'Notification email sent' }), { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
