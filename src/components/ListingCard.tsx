@@ -125,12 +125,7 @@ const ListingCard = ({ listing, onMessage }: ListingCardProps) => {
           />
         </div>
         
-        <div className="absolute top-3 left-3 flex space-x-2">
-          <div className="bg-black/50 text-white px-2 py-1 rounded-full text-xs flex items-center space-x-1">
-            <Eye className="w-3 h-3" />
-            <span>{listing.views || 0}</span>
-          </div>
-        </div>
+        {/* Removed view count display here */}
         
       </div>
 
