@@ -8,6 +8,7 @@ import { Heart, MapPin, Star, MessageCircle, ArrowLeft, ChevronLeft, ChevronRigh
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import ListingChat from '@/components/messaging/ListingChat';
+import Header from '@/components/Header';
 
 interface Listing {
   id: string;
@@ -95,6 +96,21 @@ const ListingDetails = () => {
         }
 
         setListing(data);
+
+        // Increment view count for non-seller, non-admin users
+        if (user && data && user.id !== data.seller_id) {
+          // Check if user is admin
+          const { data: isAdmin, error: adminError } = await supabase.rpc('has_role', {
+            _user_id: user.id,
+            _role: 'admin',
+          });
+          if (!adminError && !isAdmin) {
+            await supabase
+              .from('listings')
+              .update({ views: (data.views || 0) + 1 })
+              .eq('id', data.id);
+          }
+        }
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -103,7 +119,7 @@ const ListingDetails = () => {
     };
 
     fetchListing();
-  }, [id]);
+  }, [id, user]);
 
   const handleFavorite = async () => {
     if (!user) {
@@ -201,6 +217,7 @@ const ListingDetails = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Header />
       <div className="container mx-auto px-4 py-8">
         <Button
           variant="ghost"
