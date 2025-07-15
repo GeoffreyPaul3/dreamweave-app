@@ -164,7 +164,8 @@ globalThis.Deno?.serve?.(async (req: Request) => {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Max-Age': '86400',
       },
     });
   }
@@ -175,6 +176,7 @@ globalThis.Deno?.serve?.(async (req: Request) => {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
   }
@@ -195,7 +197,14 @@ globalThis.Deno?.serve?.(async (req: Request) => {
         subject: 'Your KYC Verification is Complete!',
         html: kycApprovedHtml(userName),
       });
-      return new Response(JSON.stringify({ success: true, message: 'KYC approval email sent' }), { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
+      return new Response(JSON.stringify({ success: true, message: 'KYC approval email sent' }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      });
     } else if (event === 'kyc_rejected') {
       await sendEmail({
         to: userEmail,
