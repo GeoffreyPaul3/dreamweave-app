@@ -55,9 +55,7 @@ const FeaturedProducts = () => {
         .limit(8);
 
       if (error) throw error;
-      if (data) {
-        data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      }
+      // Removed client-side sort to rely on Supabase ordering
       setListings(data || []);
     } catch (error) {
       console.error('Error fetching listings:', error);
@@ -71,9 +69,9 @@ const FeaturedProducts = () => {
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Featured Products</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Latest Listings</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Hand-picked quality items from trusted sellers across Malawi
+              Discover the newest items added by sellers across Malawi
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -95,9 +93,9 @@ const FeaturedProducts = () => {
     <section className="py-16">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">Featured Products</h2>
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">Latest Listings</h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Hand-picked quality items from trusted sellers across Malawi
+            Discover the newest items added by sellers across Malawi
           </p>
         </div>
 
