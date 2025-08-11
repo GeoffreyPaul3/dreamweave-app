@@ -79,15 +79,6 @@ const Footer = () => {
             <p className="text-gray-400 text-sm">
             &copy; {new Date().getFullYear()} DreamWeave Marketplace. All rights reserved.
             </p>
-            <div className="flex items-center space-x-1 text-gray-400 text-sm mt-4 md:mt-0">
-              <span>Made with</span>
-              <Heart className="w-4 h-4 text-red-500" />
-              <a href="https://geoffrey-gtiger.vercel.app"
-               target='_blank'
-              >
-              <span>by Gtiger.</span>
-              </a>
-            </div>
           </div>
         </div>
       </div>
