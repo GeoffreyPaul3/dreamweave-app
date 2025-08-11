@@ -1,7 +1,7 @@
 
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Search, Star, ShoppingCart, Users, TrendingUp, Shield, Zap, ArrowRight, Sparkles } from 'lucide-react';
+import { Search, Star, ShoppingCart, Users, TrendingUp, Shield, Zap, ArrowRight } from 'lucide-react';
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -25,7 +25,6 @@ const HeroSection = () => {
               <div className="inline-flex items-center space-x-2 sm:space-x-3 bg-white/20 backdrop-blur-sm rounded-full px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm shadow-lg">
                 <span className="w-2 h-2 sm:w-3 sm:h-3 bg-green-400 rounded-full animate-pulse"></span>
                 <span className="font-semibold">🇲🇼 Malawi's #1 Trusted Marketplace</span>
-                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-300" />
               </div>
               
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-tight">
