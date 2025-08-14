@@ -22,7 +22,7 @@ interface DashboardStats {
 }
 
 const AdminDashboard = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [stats, setStats] = useState<DashboardStats>({
@@ -33,7 +33,6 @@ const AdminDashboard = () => {
     totalRevenue: 0
   });
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -41,41 +40,20 @@ const AdminDashboard = () => {
       return;
     }
     
-    checkAdminStatus();
-  }, [user, navigate]);
-
-  const checkAdminStatus = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase.rpc('has_role', {
-        _user_id: user.id,
-        _role: 'admin'
-      });
-
-      if (error) throw error;
-
-      if (!data) {
-        toast({
-          title: "Access Denied",
-          description: "You don't have admin privileges",
-          variant: "destructive"
-        });
-        navigate('/dashboard');
-        return;
-      }
-
-      setIsAdmin(true);
-      fetchStats();
-    } catch (error: any) {
+    if (!isAdmin) {
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Access Denied",
+        description: "You don't have admin privileges",
         variant: "destructive"
       });
       navigate('/dashboard');
+      return;
     }
-  };
+    
+    fetchStats();
+  }, [user, isAdmin, navigate, toast]);
+
+
 
   const fetchStats = async () => {
     try {

@@ -1,38 +1,70 @@
 
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Search, Plus, MessageCircle, User, LogOut, Settings as SettingsIcon, Shield } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { useAuth } from '@/hooks/useAuth';
+import { ShoppingCart, User, LogOut, Settings, Package, Store, Menu, X, Home, ShoppingBag, MessageCircleCodeIcon } from 'lucide-react';
+import { useAmazonCart } from '@/contexts/AmazonCartContext';
 import logo from "@/assets/dreamwave-logo.png"
 
 const Header = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { state: cartState } = useAmazonCart();
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?search=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleSignOut = async () => {
-    try {
       await signOut();
       navigate('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+  };
+
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
+  const isAmazonRoute = location.pathname.startsWith('/amazon');
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    closeMobileMenu();
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header className={`sticky top-0 z-50 transition-all duration-200 ${
+      isScrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white'
+    }`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -45,80 +77,366 @@ const Header = () => {
             />
           </Link>
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                type="text"
-                placeholder="Search for products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4"
-              />
-            </div>
-          </form>
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center space-x-8">
+            <Link
+              to="/"
+              className={`text-sm font-medium transition-colors ${
+                isActive('/') && !isAmazonRoute
+                  ? 'text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Marketplace
+            </Link>
+            <Link
+              to="/amazon"
+              className={`text-sm font-medium transition-colors ${
+                isAmazonRoute
+                  ? 'text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Amazon UAE Store
+            </Link>
+            {isAmazonRoute && (
+              <Link
+                to="/amazon/cart"
+                className="text-sm font-medium transition-colors text-gray-600 hover:text-gray-900 flex items-center gap-1"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                Cart ({cartState.totalItems})
+              </Link>
+            )}
+            <Link
+              to="/categories"
+              className={`text-sm font-medium transition-colors ${
+                isActive('/categories')
+                  ? 'text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Categories
+            </Link>
+            <Link
+              to="/about"
+              className={`text-sm font-medium transition-colors ${
+                isActive('/about')
+                  ? 'text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              About
+            </Link>
+          </nav>
 
-          {/* Navigation */}
-          <nav className="flex items-center space-x-4">
+          {/* Right Side */}
+          <div className="flex items-center space-x-4">
+            {/* Cart Badge for Mobile */}
+            {isAmazonRoute && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/amazon/cart')}
+                className="lg:hidden flex items-center gap-1"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                <Badge variant="secondary" className="ml-1">
+                  {cartState.totalItems}
+                </Badge>
+              </Button>
+            )}
+
             {user ? (
               <>
+                {/* Desktop Buttons */}
+                <div className="hidden lg:flex items-center space-x-2">
+                  {/* Amazon Orders Link */}
+                  {isAmazonRoute && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/amazon/orders')}
+                      className="flex items-center gap-2"
+                    >
+                      <Package className="w-4 h-4" />
+                      My Orders
+                    </Button>
+                  )}
+
+                  {/* Marketplace Dashboard Link */}
+                  {!isAmazonRoute && (
                 <Button 
                   variant="outline" 
-                  className="hidden md:flex items-center space-x-2"
-                  onClick={() => navigate('/create-listing')}
+                      size="sm"
+                      onClick={() => navigate('/dashboard')}
+                      className="flex items-center gap-2"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>Sell</span>
+                      <Store className="w-4 h-4" />
+                      Dashboard
                 </Button>
+                  )}
 
+                  {/* Admin Dashboard Links */}
+                  {isAdmin && (
+                    <>
+                      {!isAmazonRoute && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate('/admin')}
+                          className="flex items-center gap-2"
+                        >
+                          <Settings className="w-4 h-4" />
+                          Admin
+                        </Button>
+                      )}
+                      {isAmazonRoute && (
                 <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => navigate('/messages')}
-                  className="relative"
-                >
-                  <MessageCircle className="w-5 h-5" />
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate('/amazon/admin')}
+                          className="flex items-center gap-2"
+                        >
+                          <Settings className="w-4 h-4" />
+                          Amazon Admin
                 </Button>
+                      )}
+                    </>
+                  )}
+                </div>
 
+                {/* User Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src="" alt="" />
+                        <AvatarImage src={user.user_metadata?.avatar_url} alt={user.user_metadata?.full_name} />
                         <AvatarFallback>
-                          <User className="h-4 w-4" />
+                          {user.user_metadata?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {user.user_metadata?.full_name || 'User'}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate(isAdmin ? (isAmazonRoute ? '/amazon/admin' : '/admin') : '/dashboard')}>
                       <User className="mr-2 h-4 w-4" />
-                      Dashboard
+                      <span>{isAdmin ? 'Admin Dashboard' : 'Profile'}</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/admin')}>
-                      <Shield className="mr-2 h-4 w-4" />
-                      Admin
+                    <DropdownMenuItem onClick={() => navigate('/messages')}>
+                      <MessageCircleCodeIcon className="mr-2 h-4 w-4" />
+                      <span>Messages</span>
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2 h-4 w-4" />
-                      Sign out
+                      <span>Log out</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </>
             ) : (
-              <div className="flex items-center space-x-2">
-                <Button variant="ghost" onClick={() => navigate('/auth')}>
+              <div className="hidden lg:flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/auth')}
+                >
                   Sign In
                 </Button>
-                <Button onClick={() => navigate('/auth')}>
+                <Button
+                  size="sm"
+                  onClick={() => navigate('/auth')}
+                >
                   Sign Up
                 </Button>
               </div>
             )}
-          </nav>
+
+            {/* Mobile Menu Button */}
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm" className="lg:hidden">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                <SheetHeader>
+                  <SheetTitle className="text-left">Menu</SheetTitle>
+                </SheetHeader>
+                
+                <div className="mt-6 space-y-6">
+                  {/* Store Switcher */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-900">Switch Store</h3>
+                    <div className="space-y-2">
+                      <Button
+                        variant={!isAmazonRoute ? "default" : "outline"}
+                        className="w-full justify-start"
+                        onClick={() => handleNavigation('/')}
+                      >
+                        <Home className="w-4 h-4 mr-3" />
+                        Marketplace
+                      </Button>
+                      <Button
+                        variant={isAmazonRoute ? "default" : "outline"}
+                        className="w-full justify-start"
+                        onClick={() => handleNavigation('/amazon')}
+                      >
+                        <ShoppingBag className="w-4 h-4 mr-3" />
+                        Amazon UAE Store
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Navigation Links */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-900">Navigation</h3>
+                    <div className="space-y-2">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start"
+                        onClick={() => handleNavigation('/categories')}
+                      >
+                        Categories
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start"
+                        onClick={() => handleNavigation('/about')}
+                      >
+                        About
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* User Actions */}
+                  {user ? (
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-semibold text-gray-900">Account</h3>
+                      <div className="space-y-2">
+                        {isAmazonRoute && (
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start"
+                            onClick={() => handleNavigation('/amazon/orders')}
+                          >
+                            <Package className="w-4 h-4 mr-3" />
+                            My Orders
+                          </Button>
+                        )}
+                        {!isAmazonRoute && (
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start"
+                            onClick={() => handleNavigation(isAdmin ? '/admin' : '/dashboard')}
+                          >
+                            <Store className="w-4 h-4 mr-3" />
+                            {isAdmin ? 'Admin Dashboard' : 'Dashboard'}
+                          </Button>
+                        )}
+                        {isAdmin && (
+                          <>
+                            {!isAmazonRoute && (
+                              <Button
+                                variant="outline"
+                                className="w-full justify-start"
+                                onClick={() => handleNavigation('/admin')}
+                              >
+                                <Settings className="w-4 h-4 mr-3" />
+                                Admin
+                              </Button>
+                            )}
+                            {isAmazonRoute && (
+                              <Button
+                                variant="outline"
+                                className="w-full justify-start"
+                                onClick={() => handleNavigation('/amazon/admin')}
+                              >
+                                <Settings className="w-4 h-4 mr-3" />
+                                Amazon Admin
+                              </Button>
+                            )}
+                          </>
+                        )}
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start"
+                          onClick={() => handleNavigation('/messages')}
+                        >
+                          <MessageCircleCodeIcon className="w-4 h-4 mr-3" />
+                          Messages
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-red-600 hover:text-red-700"
+                          onClick={() => {
+                            handleSignOut();
+                            closeMobileMenu();
+                          }}
+                        >
+                          <LogOut className="w-4 h-4 mr-3" />
+                          Log out
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-semibold text-gray-900">Authentication</h3>
+                      <div className="space-y-2">
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => handleNavigation('/auth')}
+                        >
+                          Sign In
+                        </Button>
+                        <Button
+                          className="w-full"
+                          onClick={() => handleNavigation('/auth')}
+                        >
+                          Sign Up
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* User Info */}
+                  {user && (
+                    <div className="pt-4 border-t">
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={user.user_metadata?.avatar_url} alt={user.user_metadata?.full_name} />
+                          <AvatarFallback>
+                            {user.user_metadata?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {user.user_metadata?.full_name || 'User'}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {user.email}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
     </header>

@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider } from "@/hooks/AuthContext";
 import { useAdminSetup } from "@/hooks/useAdminSetup";
 import Index from "./pages/Index";
 import AuthPage from "./components/auth/AuthPage";
@@ -22,6 +22,17 @@ import Blog from "./pages/Blog";
 import NotFound from "./pages/NotFound";
 import ListingDetails from "./pages/ListingDetails";
 import PaymentCallback from "./pages/payment-callback";
+
+// Amazon UAE Integration
+import AmazonStore from "./pages/AmazonStore";
+import AmazonProductDetails from "./pages/AmazonProductDetails";
+import AmazonCart from "./pages/AmazonCart";
+import AmazonCheckout from "./pages/AmazonCheckout";
+import AmazonOrderSuccess from "./pages/AmazonOrderSuccess";
+import AmazonOrders from "./pages/AmazonOrders";
+import AmazonAdminDashboard from "./pages/AmazonAdminDashboard";
+import AmazonPaymentCallback from "./pages/AmazonPaymentCallback";
+import { AmazonCartProvider } from "./contexts/AmazonCartContext";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +58,17 @@ const AppContent = () => {
       <Route path="/blog" element={<Blog />} />
       <Route path="/listing/:id" element={<ListingDetails />} />
       <Route path="/payment-callback" element={<PaymentCallback />} />
+      
+      {/* Amazon UAE Integration Routes */}
+      <Route path="/amazon" element={<AmazonStore />} />
+      <Route path="/amazon/product/:id" element={<AmazonProductDetails />} />
+      <Route path="/amazon/cart" element={<AmazonCart />} />
+      <Route path="/amazon/checkout" element={<AmazonCheckout />} />
+      <Route path="/amazon/order-success" element={<AmazonOrderSuccess />} />
+      <Route path="/amazon/orders" element={<AmazonOrders />} />
+      <Route path="/amazon/admin" element={<AmazonAdminDashboard />} />
+      <Route path="/amazon/payment-callback" element={<AmazonPaymentCallback />} />
+      
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
@@ -60,7 +82,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <AppContent />
+          <AmazonCartProvider>
+            <AppContent />
+          </AmazonCartProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
