@@ -14,6 +14,8 @@ export interface AmazonProduct {
   rating: number;
   review_count: number;
   availability: boolean;
+  size?: string; // Available sizes for fashion products
+  color?: string; // Available colors for fashion products
   created_at: string;
   updated_at: string;
 }

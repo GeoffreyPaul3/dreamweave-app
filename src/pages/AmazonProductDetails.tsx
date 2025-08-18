@@ -232,6 +232,22 @@ const AmazonProductDetails = () => {
                   Total: MWK {totalWithShipping.toLocaleString()}
                 </div>
               </div>
+              
+              {/* Show size and color for fashion products */}
+              {product.category === 'Fashion' && (product.size || product.color) && (
+                <div className="flex flex-wrap gap-2">
+                  {product.size && (
+                    <Badge variant="secondary" className="text-sm">
+                      Size: {product.size}
+                    </Badge>
+                  )}
+                  {product.color && (
+                    <Badge variant="secondary" className="text-sm">
+                      Color: {product.color}
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
 
             <Separator />

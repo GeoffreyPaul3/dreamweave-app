@@ -149,8 +149,8 @@ const AmazonStore = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                 <div className="container mx-auto px-4 py-8">
+           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {[...Array(8)].map((_, i) => (
               <Card key={i} className="animate-pulse">
                 <div className="aspect-square bg-gray-300 rounded-t-lg"></div>
@@ -228,7 +228,7 @@ const AmazonStore = () => {
         </div>
 
                  {/* Products Grid */}
-         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
           {currentProducts.map((product) => (
             <Card key={product.id} className="hover:shadow-lg transition-shadow cursor-pointer">
               <div onClick={() => handleProductClick(product.id)}>
@@ -268,6 +268,22 @@ const AmazonStore = () => {
                      <div className="text-xs md:text-sm text-gray-500">
                        Total: MWK {(product.price + product.shipping_cost).toLocaleString()}
                      </div>
+                     
+                     {/* Show size and color for fashion products */}
+                     {product.category === 'Fashion' && (product.size || product.color) && (
+                       <div className="flex flex-wrap gap-1 mt-2">
+                         {product.size && (
+                           <Badge variant="secondary" className="text-xs">
+                             Size: {product.size}
+                           </Badge>
+                         )}
+                         {product.color && (
+                           <Badge variant="secondary" className="text-xs">
+                             Color: {product.color}
+                           </Badge>
+                         )}
+                       </div>
+                     )}
                    </div>
                 </CardContent>
               </div>

@@ -71,6 +71,8 @@ interface ConvertedAmazonProduct {
   rating: number;
   review_count: number;
   product_url: string;
+  size?: string; // Available sizes for fashion products
+  color?: string; // Available colors for fashion products
   created_at: string;
   updated_at: string;
 }
@@ -309,12 +311,50 @@ class RapidAPIAmazonService {
     };
     
     const productId = rapidProduct.product_id || rapidProduct.asin || '';
+    const category = getCategoryFromQuery(query);
+    
+    // Extract size and color information for fashion products
+    let size: string | undefined;
+    let color: string | undefined;
+    
+    if (category === 'Fashion') {
+      // Extract size from title or description
+      const sizePatterns = [
+        /\b(XS|S|M|L|XL|XXL|XXXL)\b/gi,
+        /\b(\d{1,2})\s*(?:inch|")\b/gi,
+        /\b(\d{2,3})\s*(?:cm|centimeter)\b/gi,
+        /\b(\d{1,2}[-/]\d{1,2})\b/gi, // For ranges like 8-10, 32/34
+      ];
+      
+      for (const pattern of sizePatterns) {
+        const match = rapidProduct.product_title.match(pattern) || rapidProduct.product_description?.match(pattern);
+        if (match) {
+          size = match[0];
+          break;
+        }
+      }
+      
+      // Extract color from title or description
+      const colorPatterns = [
+        /\b(Black|White|Red|Blue|Green|Yellow|Pink|Purple|Orange|Brown|Gray|Grey|Navy|Beige|Khaki|Olive|Maroon|Coral|Teal|Lavender|Mint|Cream|Gold|Silver|Bronze)\b/gi,
+        /\b(Multi|Multi-color|Multicolor|Colorful|Neutral|Dark|Light|Bright|Pastel|Vintage|Classic|Modern)\b/gi,
+      ];
+      
+      for (const pattern of colorPatterns) {
+        const match = rapidProduct.product_title.match(pattern) || rapidProduct.product_description?.match(pattern);
+        if (match) {
+          color = match[0];
+          break;
+        }
+      }
+    }
+    
     return {
       id: crypto.randomUUID(), // Generate a proper UUID for the id field
       asin: productId, // Use the ASIN for the asin field
       title: rapidProduct.product_title,
       brand: rapidProduct.product_brand || 'Unknown Brand',
-      category: getCategoryFromQuery(query), // Use the query to determine category
+      category: category, // Use the query to determine category
       price: price * conversionRate, // Convert to MWK
       price_aed: price, // Original AED price
       shipping_cost: 0, // Will be calculated based on conversion rate
@@ -326,6 +366,8 @@ class RapidAPIAmazonService {
       rating: rapidProduct.product_rating || 0,
       review_count: rapidProduct.product_num_ratings || 0,
       product_url: rapidProduct.product_url,
+      size: size,
+      color: color,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -890,6 +932,8 @@ class RapidAPIAmazonService {
         if (product.shipping_cost !== undefined) updateData.shipping_cost = product.shipping_cost;
         if (product.shipping_cost_aed !== undefined) updateData.shipping_cost_aed = product.shipping_cost_aed;
         if (product.product_url !== undefined) updateData.product_url = product.product_url;
+        if (product.size !== undefined) updateData.size = product.size;
+        if (product.color !== undefined) updateData.color = product.color;
 
         const { error: updateError } = await supabase
           .from('amazon_products' as any)
@@ -927,6 +971,8 @@ class RapidAPIAmazonService {
       if (product.shipping_cost !== undefined) insertData.shipping_cost = product.shipping_cost;
       if (product.shipping_cost_aed !== undefined) insertData.shipping_cost_aed = product.shipping_cost_aed;
       if (product.product_url !== undefined) insertData.product_url = product.product_url;
+      if (product.size !== undefined) insertData.size = product.size;
+      if (product.color !== undefined) insertData.color = product.color;
 
       const { error: insertError } = await supabase
         .from('amazon_products' as any)

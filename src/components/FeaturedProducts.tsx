@@ -33,6 +33,8 @@ interface AmazonProduct {
   category: string;
   rating: number;
   review_count: number;
+  size?: string;
+  color?: string;
   created_at: string;
 }
 
@@ -67,7 +69,7 @@ const FeaturedProducts = () => {
         .eq('status', 'active')
         .eq('payment_verified', true)
         .order('created_at', { ascending: false })
-        .limit(4);
+        .limit(6);
 
       if (error) throw error;
       setListings(data || []);
@@ -79,7 +81,7 @@ const FeaturedProducts = () => {
   const fetchAmazonProducts = async () => {
     try {
       const products = await rapidAPIAmazonService.fetchProducts();
-      setAmazonProducts(products.slice(0, 4)); // Get first 4 products
+      setAmazonProducts(products.slice(0, 6)); // Get first 6 products
     } catch (error) {
       console.error('Error fetching Amazon products:', error);
     } finally {
@@ -129,7 +131,7 @@ const FeaturedProducts = () => {
               <p className="text-gray-500">No local listings available yet.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {listings.map((listing) => (
                 <ListingCard key={listing.id} listing={listing} />
               ))}
@@ -151,7 +153,7 @@ const FeaturedProducts = () => {
               <p className="text-gray-500">No Dubai store products available yet.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {amazonProducts.map((product) => (
                 <div key={product.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer">
                   <div onClick={() => navigate(`/amazon/product/${product.id}`)}>
@@ -185,6 +187,22 @@ const FeaturedProducts = () => {
                             {product.brand}
                           </span>
                         </div>
+                        
+                        {/* Show size and color for fashion products */}
+                        {product.category === 'Fashion' && (product.size || product.color) && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {product.size && (
+                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                Size: {product.size}
+                              </span>
+                            )}
+                            {product.color && (
+                              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                                Color: {product.color}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
