@@ -286,7 +286,7 @@ const Categories = () => {
 
         {/* Listings Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {[...Array(8)].map((_, index) => (
               <Card key={index} className="animate-pulse">
                 <div className="aspect-square bg-gray-200 rounded-t-lg" />
@@ -306,7 +306,7 @@ const Categories = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {listings.map((listing) => (
               <ListingCard key={listing.id} listing={listing} />
             ))}
