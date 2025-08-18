@@ -227,59 +227,59 @@ const AmazonStore = () => {
           </div>
         </div>
 
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                 {/* Products Grid */}
+         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {currentProducts.map((product) => (
             <Card key={product.id} className="hover:shadow-lg transition-shadow cursor-pointer">
               <div onClick={() => handleProductClick(product.id)}>
-                <div className="aspect-square overflow-hidden rounded-t-lg">
-                  <img
-                    src={product.image_url}
-                    alt={product.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform"
-                  />
-                </div>
-                <CardContent className="p-4">
-                  <CardTitle className="text-lg font-semibold mb-2 line-clamp-2">
-                    {product.title}
-                  </CardTitle>
+                                 <div className="aspect-square overflow-hidden rounded-t-lg">
+                   <img
+                     src={product.image_url}
+                     alt={product.title}
+                     className="w-full h-full object-cover hover:scale-105 transition-transform"
+                   />
+                 </div>
+                 <CardContent className="p-3">
+                                     <CardTitle className="text-sm md:text-base font-semibold mb-2 line-clamp-2">
+                     {product.title}
+                   </CardTitle>
                   
-                  <div className="flex items-center gap-1 mb-2">
-                    {renderStars(product.rating)}
-                    <span className="text-sm text-gray-600 ml-1">
-                      ({product.review_count})
-                    </span>
-                  </div>
+                                     <div className="flex items-center gap-1 mb-2">
+                     {renderStars(product.rating)}
+                     <span className="text-xs md:text-sm text-gray-600 ml-1">
+                       ({product.review_count})
+                     </span>
+                   </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-green-600">
-                        MWK {product.price.toLocaleString()}
-                      </span>
-                      <Badge variant="outline" className="text-xs">
-                        {product.brand}
-                      </Badge>
-                    </div>
-                    
-                    <div className="text-sm text-gray-600">
-                      Shipping: MWK {product.shipping_cost.toLocaleString()}
-                    </div>
-                    
-                    <div className="text-sm text-gray-500">
-                      Total: MWK {(product.price + product.shipping_cost).toLocaleString()}
-                    </div>
-                  </div>
+                                     <div className="space-y-1">
+                     <div className="flex items-center justify-between">
+                       <span className="text-lg md:text-xl font-bold text-green-600">
+                         MWK {product.price.toLocaleString()}
+                       </span>
+                       <Badge variant="outline" className="text-xs">
+                         {product.brand}
+                       </Badge>
+                     </div>
+                     
+                     <div className="text-xs md:text-sm text-gray-600">
+                       Shipping: MWK {product.shipping_cost.toLocaleString()}
+                     </div>
+                     
+                     <div className="text-xs md:text-sm text-gray-500">
+                       Total: MWK {(product.price + product.shipping_cost).toLocaleString()}
+                     </div>
+                   </div>
                 </CardContent>
               </div>
               
-                             <div className="p-4 pt-0">
+                             <div className="p-3 pt-0">
                  <Button 
                    onClick={() => handleAddToCart(product)}
                    className="w-full"
                    size="sm"
                  >
-                   <Plus className="w-4 h-4 mr-2" />
-                   Add to Cart
+                   <Plus className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                   <span className="text-xs md:text-sm">Add to Cart</span>
                  </Button>
                </div>
             </Card>
