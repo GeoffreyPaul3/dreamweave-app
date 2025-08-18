@@ -313,6 +313,54 @@ class RapidAPIAmazonService {
     const productId = rapidProduct.product_id || rapidProduct.asin || '';
     const category = getCategoryFromQuery(query);
     
+    // Extract brand from title, description, or use provided brand
+    const extractBrand = (title: string, description?: string, providedBrand?: string): string => {
+      if (providedBrand && providedBrand.trim() !== '') {
+        return providedBrand.trim();
+      }
+      
+      // Common brand patterns to look for in title/description
+      const brandPatterns = [
+        // Electronics brands
+        /\b(Apple|Samsung|Sony|LG|Panasonic|Philips|Bose|JBL|Sennheiser|Canon|Nikon|GoPro|DJI|Xiaomi|Huawei|OnePlus|Google|Microsoft|Dell|HP|Lenovo|Asus|Acer|Razer|Logitech|Corsair|SteelSeries)\b/gi,
+        // Fashion brands
+        /\b(Nike|Adidas|Puma|Under Armour|Reebok|New Balance|Converse|Vans|Levi's|Calvin Klein|Tommy Hilfiger|Ralph Lauren|Gap|H&M|Zara|Uniqlo|Forever 21|ASOS|Topshop|River Island)\b/gi,
+        // Home & Garden brands
+        /\b(IKEA|Bosch|Siemens|Whirlpool|Samsung|LG|Philips|Dyson|Hoover|Black & Decker|DeWalt|Makita|Ryobi|Craftsman|Stanley|Karcher)\b/gi,
+        // Sports brands
+        /\b(Nike|Adidas|Puma|Under Armour|Reebok|Wilson|Spalding|Rawlings|Easton|Bauer|CCM|Sherwood|Warrior|STX|Brine|Cascade)\b/gi,
+        // Beauty brands
+        /\b(L'Oreal|Maybelline|Revlon|CoverGirl|MAC|Estee Lauder|Clinique|Lancome|Dior|Chanel|YSL|NARS|Urban Decay|Too Faced|Benefit|The Ordinary)\b/gi,
+        // General patterns
+        /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:by|from|by\s+)\b/gi,
+        /\b(?:Brand|Made by|Manufactured by):\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b/gi,
+      ];
+      
+      const searchText = `${title} ${description || ''}`.toLowerCase();
+      
+      for (const pattern of brandPatterns) {
+        const matches = searchText.match(pattern);
+        if (matches && matches.length > 0) {
+          // Clean up the brand name
+          const brand = matches[0].replace(/\b(by|from|brand|made by|manufactured by):?\s*/gi, '').trim();
+          if (brand.length > 2 && brand.length < 50) {
+            return brand.charAt(0).toUpperCase() + brand.slice(1);
+          }
+        }
+      }
+      
+      // If no brand found, try to extract from the beginning of the title
+      const titleWords = title.split(' ');
+      if (titleWords.length > 1) {
+        const firstWord = titleWords[0];
+        if (firstWord.length > 2 && firstWord.length < 20 && /^[A-Za-z]+$/.test(firstWord)) {
+          return firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase();
+        }
+      }
+      
+      return 'Unknown Brand';
+    };
+    
     // Extract size and color information for fashion products
     let size: string | undefined;
     let color: string | undefined;
@@ -353,7 +401,7 @@ class RapidAPIAmazonService {
       id: crypto.randomUUID(), // Generate a proper UUID for the id field
       asin: productId, // Use the ASIN for the asin field
       title: rapidProduct.product_title,
-      brand: rapidProduct.product_brand || 'Unknown Brand',
+      brand: extractBrand(rapidProduct.product_title, rapidProduct.product_description, rapidProduct.product_brand),
       category: category, // Use the query to determine category
       price: price * conversionRate, // Convert to MWK
       price_aed: price, // Original AED price
@@ -635,6 +683,146 @@ class RapidAPIAmazonService {
       }
       
       throw error;
+    }
+  }
+
+  /**
+   * Update existing products with improved brand extraction
+   */
+  async updateExistingProductBrands(): Promise<{
+    success: boolean;
+    message: string;
+    updatedCount: number;
+    totalCount: number;
+  }> {
+    try {
+      console.log('Starting brand update for existing products...');
+      
+      // Get all products with "Unknown Brand"
+      const { data: products, error } = await supabase
+        .from('amazon_products' as any)
+        .select('id, title, description, brand')
+        .eq('brand', 'Unknown Brand');
+
+      if (error) {
+        console.error('Error fetching products for brand update:', error);
+        return {
+          success: false,
+          message: 'Failed to fetch products for brand update',
+          updatedCount: 0,
+          totalCount: 0
+        };
+      }
+
+      if (!products || products.length === 0) {
+        return {
+          success: true,
+          message: 'No products with "Unknown Brand" found to update',
+          updatedCount: 0,
+          totalCount: 0
+        };
+      }
+
+      console.log(`Found ${products.length} products with "Unknown Brand" to update`);
+
+      let updatedCount = 0;
+      const updatePromises = products.map(async (product: any) => {
+        try {
+          // Extract brand using the same logic as convertToAmazonProduct
+          const extractBrand = (title: string, description?: string, providedBrand?: string): string => {
+            if (providedBrand && providedBrand.trim() !== '' && providedBrand.trim() !== 'Unknown Brand') {
+              return providedBrand.trim();
+            }
+            
+            // Common brand patterns to look for in title/description
+            const brandPatterns = [
+              // Electronics brands
+              /\b(Apple|Samsung|Sony|LG|Panasonic|Philips|Bose|JBL|Sennheiser|Canon|Nikon|GoPro|DJI|Xiaomi|Huawei|OnePlus|Google|Microsoft|Dell|HP|Lenovo|Asus|Acer|Razer|Logitech|Corsair|SteelSeries)\b/gi,
+              // Fashion brands
+              /\b(Nike|Adidas|Puma|Under Armour|Reebok|New Balance|Converse|Vans|Levi's|Calvin Klein|Tommy Hilfiger|Ralph Lauren|Gap|H&M|Zara|Uniqlo|Forever 21|ASOS|Topshop|River Island)\b/gi,
+              // Home & Garden brands
+              /\b(IKEA|Bosch|Siemens|Whirlpool|Samsung|LG|Philips|Dyson|Hoover|Black & Decker|DeWalt|Makita|Ryobi|Craftsman|Stanley|Karcher)\b/gi,
+              // Sports brands
+              /\b(Nike|Adidas|Puma|Under Armour|Reebok|Wilson|Spalding|Rawlings|Easton|Bauer|CCM|Sherwood|Warrior|STX|Brine|Cascade)\b/gi,
+              // Beauty brands
+              /\b(L'Oreal|Maybelline|Revlon|CoverGirl|MAC|Estee Lauder|Clinique|Lancome|Dior|Chanel|YSL|NARS|Urban Decay|Too Faced|Benefit|The Ordinary)\b/gi,
+              // General patterns
+              /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:by|from|by\s+)\b/gi,
+              /\b(?:Brand|Made by|Manufactured by):\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b/gi,
+            ];
+            
+            const searchText = `${title} ${description || ''}`.toLowerCase();
+            
+            for (const pattern of brandPatterns) {
+              const matches = searchText.match(pattern);
+              if (matches && matches.length > 0) {
+                // Clean up the brand name
+                const brand = matches[0].replace(/\b(by|from|brand|made by|manufactured by):?\s*/gi, '').trim();
+                if (brand.length > 2 && brand.length < 50) {
+                  return brand.charAt(0).toUpperCase() + brand.slice(1);
+                }
+              }
+            }
+            
+            // If no brand found, try to extract from the beginning of the title
+            const titleWords = title.split(' ');
+            if (titleWords.length > 1) {
+              const firstWord = titleWords[0];
+              if (firstWord.length > 2 && firstWord.length < 20 && /^[A-Za-z]+$/.test(firstWord)) {
+                return firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase();
+              }
+            }
+            
+            return 'Unknown Brand';
+          };
+
+          const newBrand = extractBrand(product.title, product.description, product.brand);
+          
+          // Only update if we found a better brand
+          if (newBrand !== 'Unknown Brand') {
+            const { error: updateError } = await supabase
+              .from('amazon_products' as any)
+              .update({
+                brand: newBrand,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', product.id);
+
+            if (updateError) {
+              console.error(`Error updating brand for product ${product.id}:`, updateError);
+              return false;
+            }
+
+            console.log(`Updated brand for "${product.title}" from "Unknown Brand" to "${newBrand}"`);
+            return true;
+          }
+          
+          return false;
+        } catch (productError) {
+          console.error(`Error processing product ${product.id}:`, productError);
+          return false;
+        }
+      });
+
+      const results = await Promise.all(updatePromises);
+      updatedCount = results.filter(result => result === true).length;
+
+      console.log(`Successfully updated ${updatedCount} out of ${products.length} products`);
+
+      return {
+        success: true,
+        message: `Successfully updated ${updatedCount} out of ${products.length} products with improved brand detection`,
+        updatedCount,
+        totalCount: products.length
+      };
+    } catch (error) {
+      console.error('Error updating existing product brands:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error occurred',
+        updatedCount: 0,
+        totalCount: 0
+      };
     }
   }
 

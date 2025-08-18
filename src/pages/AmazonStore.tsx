@@ -256,9 +256,6 @@ const AmazonStore = () => {
                        <span className="text-lg md:text-xl font-bold text-green-600">
                          MWK {product.price.toLocaleString()}
                        </span>
-                       <Badge variant="outline" className="text-xs">
-                         {product.brand}
-                       </Badge>
                      </div>
                      
                      <div className="text-xs md:text-sm text-gray-600">

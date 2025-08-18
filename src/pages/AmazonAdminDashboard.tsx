@@ -58,6 +58,7 @@ const AmazonAdminDashboard = () => {
   const [currentConversionRate, setCurrentConversionRate] = useState<number | null>(null);
   const [isUpdatingRate, setIsUpdatingRate] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isUpdatingBrands, setIsUpdatingBrands] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [isDeletingProducts, setIsDeletingProducts] = useState(false);
   const [newProduct, setNewProduct] = useState({
@@ -165,6 +166,41 @@ const AmazonAdminDashboard = () => {
       });
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const handleUpdateBrands = async () => {
+    setIsUpdatingBrands(true);
+    try {
+      toast({
+        title: "Updating Brands",
+        description: "Analyzing existing products and updating brand information...",
+      });
+      
+      const result = await rapidAPIAmazonService.updateExistingProductBrands();
+      
+      if (result.success) {
+        toast({
+          title: "Brands Updated Successfully",
+          description: result.message,
+        });
+        fetchData(); // Refresh the data to show updated brands
+      } else {
+        toast({
+          title: "Brand Update Failed",
+          description: result.message,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Brand update error:', error);
+      toast({
+        title: "Brand Update Error",
+        description: "An error occurred while updating product brands",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdatingBrands(false);
     }
   };
 
@@ -649,6 +685,15 @@ const AmazonAdminDashboard = () => {
             >
               <Package className="w-4 h-4" />
               {isSyncing ? 'Syncing...' : 'Sync Products'}
+            </Button>
+            <Button 
+              onClick={handleUpdateBrands} 
+              disabled={isUpdatingBrands}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              {isUpdatingBrands ? 'Updating...' : 'Update Brands'}
             </Button>
           </div>
         </div>

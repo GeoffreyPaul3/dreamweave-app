@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { amazonUAEService } from '@/integrations/amazon-uae/service';
+import { rapidAPIAmazonService } from '@/integrations/amazon-uae/rapidapi-service';
 import { AmazonProduct, ProductReview } from '@/integrations/amazon-uae/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -33,11 +33,16 @@ const AmazonProductDetails = () => {
     
     setLoading(true);
     try {
-      const productData = await amazonUAEService.getProductById(id);
-      const reviewsData = await amazonUAEService.getProductReviews(id);
+      // Get all products and find the one with matching ID
+      const allProducts = await rapidAPIAmazonService.fetchProducts();
+      const productData = allProducts.find(p => p.id === id);
+      
+      if (!productData) {
+        throw new Error('Product not found');
+      }
       
       setProduct(productData);
-      setReviews(reviewsData);
+      setReviews([]); // Reviews not implemented in rapidAPI service yet
     } catch (error) {
       console.error('Error fetching product details:', error);
       toast({
@@ -85,7 +90,7 @@ const AmazonProductDetails = () => {
 
     const totalAmount = (product?.price || 0) * quantity + (product?.shipping_cost || 0);
     
-    if (!amazonUAEService.validateOrderAmount(totalAmount)) {
+    if (totalAmount < 250000 || totalAmount > 20000000) {
       toast({
         title: "Invalid Order Amount",
         description: "Order amount must be between MWK 250,000 and MWK 20,000,000",
@@ -107,7 +112,8 @@ const AmazonProductDetails = () => {
     if (!user || !product) return;
 
     try {
-      await amazonUAEService.addReview({
+      // TODO: Implement review functionality with rapidAPI service
+      console.log('Review submission:', {
         product_id: product.id,
         user_id: user.id,
         rating: reviewRating,
@@ -207,9 +213,6 @@ const AmazonProductDetails = () => {
           {/* Product Details */}
           <div className="space-y-6">
             <div>
-              <Badge variant="outline" className="mb-2">
-                {product.brand}
-              </Badge>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 {product.title}
               </h1>

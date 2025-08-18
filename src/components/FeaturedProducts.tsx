@@ -183,9 +183,6 @@ const FeaturedProducts = () => {
                           <span className="text-lg md:text-xl font-bold text-green-600">
                             MWK {product.price.toLocaleString()}
                           </span>
-                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                            {product.brand}
-                          </span>
                         </div>
                         
                         {/* Show size and color for fashion products */}
