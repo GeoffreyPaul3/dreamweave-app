@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { amazonUAEService } from '@/integrations/amazon-uae/service';
+import { rapidAPIAmazonService } from '@/integrations/amazon-uae/rapidapi-service';
 import { AmazonProduct } from '@/integrations/amazon-uae/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -39,7 +39,7 @@ const AmazonStore = () => {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await amazonUAEService.fetchProducts(selectedCategory, searchTerm);
+      const data = await rapidAPIAmazonService.fetchProducts(selectedCategory, searchTerm);
       setProducts(data);
       setCurrentPage(1); // Reset to first page when filters change
     } catch (error) {
@@ -173,11 +173,11 @@ const AmazonStore = () => {
       
       <div className="container mx-auto px-4 py-8">
         {/* Hero Section */}
-        <div className="gradient-primary text-white rounded-lg p-8 mb-8">
-          <h1 className="text-4xl font-bold mb-4">Amazon UAE Store</h1>
-          <p className="text-xl mb-6">
-            Shop the latest products from Amazon UAE with fast delivery to Malawi
-          </p>
+                 <div className="gradient-primary text-white rounded-lg p-8 mb-8">
+           <h1 className="text-4xl font-bold mb-4">Dream Weave Dubai Store</h1>
+           <p className="text-xl mb-6">
+             Shop the latest products from Dream Weave Dubai with fast delivery to Malawi
+           </p>
           <div className="flex items-center space-x-4">
             <Truck className="w-6 h-6" />
             <span>10-15 days delivery</span>
@@ -193,7 +193,7 @@ const AmazonStore = () => {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
-                placeholder="Search Amazon UAE products..."
+                                 placeholder="Search Dream Weave Dubai products..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"

@@ -97,7 +97,7 @@ const Header = () => {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Amazon UAE Store
+               Dubai Store
             </Link>
             {isAmazonRoute && (
               <Link
@@ -295,7 +295,7 @@ const Header = () => {
                         onClick={() => handleNavigation('/amazon')}
                       >
                         <ShoppingBag className="w-4 h-4 mr-3" />
-                        Amazon UAE Store
+                        Dream Weave Dubai Store
                       </Button>
                     </div>
                   </div>

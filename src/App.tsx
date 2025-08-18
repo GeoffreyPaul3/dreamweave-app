@@ -23,7 +23,7 @@ import NotFound from "./pages/NotFound";
 import ListingDetails from "./pages/ListingDetails";
 import PaymentCallback from "./pages/payment-callback";
 
-// Amazon UAE Integration
+// Dream Weave Dubai Integration
 import AmazonStore from "./pages/AmazonStore";
 import AmazonProductDetails from "./pages/AmazonProductDetails";
 import AmazonCart from "./pages/AmazonCart";
@@ -59,7 +59,7 @@ const AppContent = () => {
       <Route path="/listing/:id" element={<ListingDetails />} />
       <Route path="/payment-callback" element={<PaymentCallback />} />
       
-      {/* Amazon UAE Integration Routes */}
+             {/* Dream Weave Dubai Integration Routes */}
       <Route path="/amazon" element={<AmazonStore />} />
       <Route path="/amazon/product/:id" element={<AmazonProductDetails />} />
       <Route path="/amazon/cart" element={<AmazonCart />} />

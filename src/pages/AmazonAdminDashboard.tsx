@@ -26,7 +26,7 @@ import {
   Upload,
   X
 } from 'lucide-react';
-import { amazonUAEService } from '@/integrations/amazon-uae/service';
+import { rapidAPIAmazonService } from '@/integrations/amazon-uae/rapidapi-service';
 import { AmazonProduct, AmazonOrder, AmazonUser } from '@/integrations/amazon-uae/types';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
@@ -57,6 +57,7 @@ const AmazonAdminDashboard = () => {
   const [conversionRate, setConversionRate] = useState<string>('1000');
   const [currentConversionRate, setCurrentConversionRate] = useState<number | null>(null);
   const [isUpdatingRate, setIsUpdatingRate] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [isDeletingProducts, setIsDeletingProducts] = useState(false);
   const [newProduct, setNewProduct] = useState({
@@ -100,11 +101,14 @@ const AmazonAdminDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
+      console.log('rapidAPIAmazonService:', rapidAPIAmazonService);
+      console.log('fetchProducts method:', rapidAPIAmazonService.fetchProducts);
+      
       const [productsData, ordersData, usersData, conversionSettings] = await Promise.all([
-        amazonUAEService.fetchProducts(),
-        amazonUAEService.getAllOrders(),
-        amazonUAEService.getVerifiedUsers(),
-        amazonUAEService.getCurrencyConversionSettings()
+        rapidAPIAmazonService.fetchProducts(),
+        rapidAPIAmazonService.getAllOrders(),
+        rapidAPIAmazonService.getVerifiedUsers(),
+        rapidAPIAmazonService.getCurrencyConversionSettings()
       ]);
       
       setProducts(productsData);
@@ -123,27 +127,44 @@ const AmazonAdminDashboard = () => {
   };
 
   const handleSyncProducts = async () => {
+    setIsSyncing(true);
     try {
       toast({
         title: "Syncing Products",
-        description: "Syncing Amazon UAE products by category...",
+                 description: "Syncing Dream Weave Dubai products by category...",
       });
       
-      await amazonUAEService.syncProductsFromAmazon();
+      await rapidAPIAmazonService.syncProductsFromAmazon();
       
       toast({
         title: "Products Synced Successfully",
-        description: "Amazon UAE products have been synced and organized by categories",
+                 description: "Dream Weave Dubai products have been synced and organized by categories",
       });
       
       fetchData();
     } catch (error) {
       console.error('Sync error:', error);
+      
+      // Provide specific error messages based on the error type
+             let errorMessage = "Failed to sync products from Dream Weave Dubai. Please try again.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('rate limit') || error.message.includes('429')) {
+          errorMessage = "API rate limit exceeded. Please try again in a few minutes or upgrade your RapidAPI plan.";
+        } else if (error.message.includes('API')) {
+          errorMessage = "Amazon API is currently unavailable. Please try again later.";
+        } else if (error.message.includes('network')) {
+          errorMessage = "Network error. Please check your internet connection and try again.";
+        }
+      }
+      
       toast({
         title: "Sync Error",
-        description: "Failed to sync products from Amazon UAE. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -161,7 +182,7 @@ const AmazonAdminDashboard = () => {
     setIsUpdatingRate(true);
     try {
       // First update the conversion rate
-      const success = await amazonUAEService.updateCurrencyConversionRate(rate);
+             const success = await rapidAPIAmazonService.updateCurrencyConversionRate(rate);
       
       if (success) {
         // Then update all existing product prices with the new rate
@@ -170,7 +191,7 @@ const AmazonAdminDashboard = () => {
           description: "Updating all product prices with the new conversion rate...",
         });
 
-        const pricesUpdated = await amazonUAEService.updateAllProductPricesWithNewRate(rate);
+                 const pricesUpdated = await rapidAPIAmazonService.updateAllProductPricesWithNewRate(rate);
         
         if (pricesUpdated) {
           toast({
@@ -240,7 +261,7 @@ const AmazonAdminDashboard = () => {
     try {
       // If all products are selected, use the clearAllProducts method
       if (selectedProducts.size === products.length) {
-        const success = await amazonUAEService.clearAllProducts();
+                 const success = await rapidAPIAmazonService.deleteAllProducts();
         if (success) {
           toast({
             title: "All Products Deleted",
@@ -257,8 +278,8 @@ const AmazonAdminDashboard = () => {
         }
       } else {
         // Delete selected products individually
-        const deletePromises = Array.from(selectedProducts).map(productId =>
-          amazonUAEService.deleteProduct(productId)
+                         const deletePromises = Array.from(selectedProducts).map(productId =>
+          rapidAPIAmazonService.deleteProduct(productId)
         );
         
         const results = await Promise.all(deletePromises);
@@ -319,7 +340,7 @@ const AmazonAdminDashboard = () => {
       };
 
       // Update product using the service
-      await amazonUAEService.upsertProduct(updatedProductData);
+             await rapidAPIAmazonService.upsertProduct(updatedProductData);
       
       toast({
         title: "Product Updated",
@@ -377,7 +398,7 @@ const AmazonAdminDashboard = () => {
       };
 
       // Add product using the service
-      await amazonUAEService.upsertProduct(productData);
+             await rapidAPIAmazonService.upsertProduct(productData);
       
       toast({
         title: "Product Added",
@@ -457,7 +478,7 @@ const AmazonAdminDashboard = () => {
         description: `Updating order status to ${status} and sending email notification...`,
       });
 
-      const result = await amazonUAEService.updateOrderStatus(orderId, status, notes);
+             const result = await rapidAPIAmazonService.updateOrderStatus(orderId, status, notes);
       
       if (result) {
         toast({
@@ -586,7 +607,7 @@ const AmazonAdminDashboard = () => {
   const stats = {
     totalOrders: orders.length,
     pendingOrders: orders.filter(o => o.status === 'pending').length,
-    totalRevenue: orders.reduce((sum, o) => sum + o.total_amount, 0),
+    totalRevenue: orders.filter(o => o.status !== 'payment_pending').reduce((sum, o) => sum + o.total_amount, 0),
     totalProducts: products.length
   };
 
@@ -619,11 +640,15 @@ const AmazonAdminDashboard = () => {
       
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold">Amazon UAE Admin Dashboard</h1>
+                     <h1 className="text-3xl font-bold">Dream Weave Dubai Admin Dashboard</h1>
           <div className="flex gap-2">
-            <Button onClick={handleSyncProducts} className="flex items-center gap-2">
+            <Button 
+              onClick={handleSyncProducts} 
+              disabled={isSyncing}
+              className="flex items-center gap-2"
+            >
               <Package className="w-4 h-4" />
-              Sync Products
+              {isSyncing ? 'Syncing...' : 'Sync Products'}
             </Button>
           </div>
         </div>
@@ -883,7 +908,7 @@ const AmazonAdminDashboard = () => {
                                 size="sm"
                                 onClick={async () => {
                                   try {
-                                    const success = await amazonUAEService.deleteProduct(product.id);
+                                                                         const success = await rapidAPIAmazonService.deleteProduct(product.id);
                                     if (success) {
                                       toast({
                                         title: "Product Deleted",
@@ -925,9 +950,9 @@ const AmazonAdminDashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Currency Conversion Settings</CardTitle>
-                <p className="text-sm text-gray-600">
-                  Set the conversion rate from UAE Dirhams (AED) to Malawian Kwacha (MWK) for Amazon UAE products.
-                </p>
+                                 <p className="text-sm text-gray-600">
+                   Set the conversion rate from UAE Dirhams (AED) to Malawian Kwacha (MWK) for Dream Weave Dubai products.
+                 </p>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -960,19 +985,19 @@ const AmazonAdminDashboard = () => {
                         {isUpdatingRate ? 'Updating...' : 'Update Rate'}
                       </Button>
                     </div>
-                    <p className="text-xs text-gray-500">
-                      Example: If 1 AED = 1000 MWK, enter 1000. This rate will be applied when syncing products from Amazon UAE.
-                    </p>
+                                         <p className="text-xs text-gray-500">
+                       Example: If 1 AED = 1000 MWK, enter 1000. This rate will be applied when syncing products from Dream Weave Dubai.
+                     </p>
                   </div>
                   
                   <div className="mt-6 p-4 bg-blue-50 rounded-lg">
                     <h4 className="font-medium text-blue-900 mb-2">How it works:</h4>
-                    <ul className="text-sm text-blue-800 space-y-1">
-                      <li>• Amazon UAE products are priced in UAE Dirhams (AED)</li>
-                      <li>• The conversion rate is applied to convert AED prices to Malawian Kwacha (MWK)</li>
-                      <li>• Updated rates take effect when you sync products from Amazon UAE</li>
-                      <li>• All prices displayed to customers will be in MWK</li>
-                    </ul>
+                                         <ul className="text-sm text-blue-800 space-y-1">
+                       <li>• Dream Weave Dubai products are priced in UAE Dirhams (AED)</li>
+                       <li>• The conversion rate is applied to convert AED prices to Malawian Kwacha (MWK)</li>
+                       <li>• Updated rates take effect when you sync products from Dream Weave Dubai</li>
+                       <li>• All prices displayed to customers will be in MWK</li>
+                     </ul>
                   </div>
                 </div>
               </CardContent>

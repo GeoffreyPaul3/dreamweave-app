@@ -72,7 +72,7 @@ const AmazonReceiptPDF: React.FC<AmazonReceiptPDFProps> = ({ order }) => {
           margin: '0 0 5px 0',
           fontWeight: '600'
         }}>
-          Amazon UAE Store
+          Dream Weave Dubai Store
         </h2>
         <p style={{
           color: '#6b7280',

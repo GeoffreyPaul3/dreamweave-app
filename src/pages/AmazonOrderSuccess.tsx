@@ -263,7 +263,7 @@ const AmazonOrderSuccess = () => {
                 <div>
                   <h4 className="font-semibold">Order Processing</h4>
                   <p className="text-sm text-gray-600">
-                    We'll process your order and purchase the product from Amazon UAE on your behalf.
+                    We'll process your order and purchase the product from Dream Weave Dubai on your behalf.
                   </p>
                 </div>
               </div>

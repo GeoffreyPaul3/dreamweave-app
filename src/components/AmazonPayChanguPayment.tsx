@@ -52,7 +52,7 @@ const AmazonPayChanguPayment = ({ order, onSuccess, onCancel }: AmazonPayChanguP
           return_url: `${window.location.origin}/amazon/checkout`,
           tx_ref: tx_ref,
           customization: {
-            title: "Amazon UAE Order Payment",
+            title: "Dream Weave Dubai Order Payment",
             description: `Payment for ${order.order_number}`,
           },
           meta: {
@@ -88,7 +88,7 @@ const AmazonPayChanguPayment = ({ order, onSuccess, onCancel }: AmazonPayChanguP
   return (
     <div className="space-y-4">
       <div className="text-center">
-        <h3 className="text-lg font-semibold mb-2">Amazon UAE Order Payment</h3>
+                     <h3 className="text-lg font-semibold mb-2">Dream Weave Dubai Order Payment</h3>
         <p className="text-gray-600 mb-4">
           Order: {order.order_number}
         </p>
