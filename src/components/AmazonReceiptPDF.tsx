@@ -24,7 +24,7 @@ const AmazonReceiptPDF: React.FC<AmazonReceiptPDFProps> = ({ order }) => {
     if (order.product_id) {
       fetchProduct();
     }
-  }, [order.product_id]);
+  }, [order.product_id, order.order_number]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
