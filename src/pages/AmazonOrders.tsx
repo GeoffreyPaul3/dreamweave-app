@@ -15,7 +15,7 @@ import {
   Download,
   MapPin
 } from 'lucide-react';
-import { amazonUAEService } from '@/integrations/amazon-uae/service';
+import { rapidAPIAmazonService } from '@/integrations/amazon-uae/rapidapi-service';
 import { AmazonOrder, OrderTracking } from '@/integrations/amazon-uae/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -36,6 +36,7 @@ const AmazonOrders = () => {
   const [trackingData, setTrackingData] = useState<OrderTracking[]>([]);
   const [showTrackingDialog, setShowTrackingDialog] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [products, setProducts] = useState<Record<string, AmazonProduct>>({});
   const receiptRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,8 +50,35 @@ const AmazonOrders = () => {
     
     setLoading(true);
     try {
-      const data = await amazonUAEService.getOrdersByUser(user.id);
-      setOrders(data);
+      // Debug: Check what products are in the database
+      await rapidAPIAmazonService.debugProducts();
+      
+      const data = await rapidAPIAmazonService.getAllOrders();
+      // Filter orders for the current user
+      const userOrders = data.filter(order => order.user_id === user.id);
+      setOrders(userOrders);
+      
+             // Fetch product information for each order
+       const productPromises = userOrders.map(async (order) => {
+         try {
+           console.log(`Fetching product for order ${order.order_number}, product_id: ${order.product_id}`);
+           const product = await rapidAPIAmazonService.getProductById(order.product_id);
+           console.log(`Product result for ${order.product_id}:`, product ? product.title : 'Not found');
+           return { productId: order.product_id, product };
+         } catch (error) {
+           console.error(`Error fetching product ${order.product_id}:`, error);
+           return { productId: order.product_id, product: null };
+         }
+       });
+      
+      const productResults = await Promise.all(productPromises);
+      const productsMap: Record<string, AmazonProduct> = {};
+      productResults.forEach(({ productId, product }) => {
+        if (product) {
+          productsMap[productId] = product;
+        }
+      });
+      setProducts(productsMap);
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast({
@@ -65,8 +93,17 @@ const AmazonOrders = () => {
 
   const handleViewTracking = async (order: AmazonOrder) => {
     try {
-      const tracking = await amazonUAEService.getOrderTracking(order.id);
-      setTrackingData(tracking);
+      // For now, we'll use mock tracking data since the rapidAPI service doesn't have tracking
+      const mockTracking: OrderTracking[] = [
+        {
+          order_id: order.id,
+          status: order.status,
+          description: `Order ${order.status}`,
+          timestamp: order.order_date,
+          location: 'Dubai, UAE'
+        }
+      ];
+      setTrackingData(mockTracking);
       setSelectedOrder(order);
       setShowTrackingDialog(true);
     } catch (error) {
@@ -263,8 +300,13 @@ const AmazonOrders = () => {
                             <Package className="w-6 h-6 text-gray-500" />
                           </div>
                           <div>
-                            <p className="font-medium">Product ID: {order.product_id}</p>
+                            <p className="font-medium">
+                              {products[order.product_id]?.title || `Product ID: ${order.product_id}`}
+                            </p>
                             <p className="text-sm text-gray-600">Qty: {order.quantity}</p>
+                            {products[order.product_id]?.brand && (
+                              <p className="text-xs text-gray-500">Brand: {products[order.product_id].brand}</p>
+                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -352,6 +394,26 @@ const AmazonOrders = () => {
                       <span className="font-medium">Estimated Delivery:</span>
                       <p>{new Date(selectedOrder.estimated_delivery).toLocaleDateString()}</p>
                     </div>
+                  </div>
+                </div>
+
+                {/* Product Information */}
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-2 flex items-center gap-2">
+                    <Package className="w-4 h-4" />
+                    Product Information
+                  </h3>
+                  <div className="text-sm">
+                    <p className="font-medium">
+                      {products[selectedOrder.product_id]?.title || `Product ID: ${selectedOrder.product_id}`}
+                    </p>
+                    <p className="text-gray-600">Quantity: {selectedOrder.quantity}</p>
+                    {products[selectedOrder.product_id]?.brand && (
+                      <p className="text-gray-600">Brand: {products[selectedOrder.product_id].brand}</p>
+                    )}
+                    {products[selectedOrder.product_id]?.category && (
+                      <p className="text-gray-600">Category: {products[selectedOrder.product_id].category}</p>
+                    )}
                   </div>
                 </div>
 

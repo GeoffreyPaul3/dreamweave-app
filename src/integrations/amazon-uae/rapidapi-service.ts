@@ -862,6 +862,67 @@ class RapidAPIAmazonService {
     }
   }
 
+  async getProductById(productId: string): Promise<AmazonProduct | null> {
+    try {
+      console.log(`Looking for product with ID/ASIN: ${productId}`);
+      
+      // First try to find by id
+      let { data, error } = await supabase
+        .from('amazon_products' as any)
+        .select('*')
+        .eq('id', productId)
+        .single();
+
+      // If not found by id, try to find by asin
+      if (error && error.code === 'PGRST116') {
+        console.log(`Product not found by ID, trying ASIN: ${productId}`);
+        const { data: asinData, error: asinError } = await supabase
+          .from('amazon_products' as any)
+          .select('*')
+          .eq('asin', productId)
+          .single();
+
+        if (asinError) {
+          console.error('Error fetching product by ASIN:', asinError);
+          return null;
+        }
+
+        console.log(`Found product by ASIN: ${(asinData as any)?.title}`);
+        return (asinData as unknown as AmazonProduct) || null;
+      }
+
+      if (error) {
+        console.error('Error fetching product by ID:', error);
+        return null;
+      }
+
+      console.log(`Found product by ID: ${(data as any)?.title}`);
+      return (data as unknown as AmazonProduct) || null;
+    } catch (error) {
+      console.error('Error fetching product by ID:', error);
+      return null;
+    }
+  }
+
+  // Debug method to check what products are in the database
+  async debugProducts(): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .from('amazon_products' as any)
+        .select('id, asin, title')
+        .limit(5);
+
+      if (error) {
+        console.error('Error fetching products for debug:', error);
+        return;
+      }
+
+      console.log('Debug: Products in database:', data);
+    } catch (error) {
+      console.error('Error in debugProducts:', error);
+    }
+  }
+
   async getAllOrders(): Promise<AmazonOrder[]> {
     try {
       const { data, error } = await supabase

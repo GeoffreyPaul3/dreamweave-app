@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AmazonOrder, AmazonProduct } from '@/integrations/amazon-uae/types';
-import { amazonUAEService } from '@/integrations/amazon-uae/service';
+import { rapidAPIAmazonService } from '@/integrations/amazon-uae/rapidapi-service';
 
 interface AmazonReceiptPDFProps {
   order: AmazonOrder;
@@ -12,7 +12,9 @@ const AmazonReceiptPDF: React.FC<AmazonReceiptPDFProps> = ({ order }) => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const productData = await amazonUAEService.getProductById(order.product_id);
+        console.log(`Receipt: Fetching product for order ${order.order_number}, product_id: ${order.product_id}`);
+        const productData = await rapidAPIAmazonService.getProductById(order.product_id);
+        console.log(`Receipt: Product result for ${order.product_id}:`, productData ? productData.title : 'Not found');
         setProduct(productData);
       } catch (error) {
         console.error('Error fetching product for receipt:', error);
