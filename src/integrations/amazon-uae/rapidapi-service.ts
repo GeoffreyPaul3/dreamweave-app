@@ -10,7 +10,7 @@ import { AmazonProduct, AmazonOrder, AmazonUser, CurrencyConversionSettings } fr
 // API Configuration
 const RAPIDAPI_CONFIG = {
   BASE_URL: 'https://real-time-amazon-data.p.rapidapi.com',
-  API_KEY: '6d4c7fd1cemsh3f3f4adbad9547ap16d1f0jsn84460902e4ad',
+  API_KEY: 'd696862c99msh1c9778640da230dp16b5bcjsn50fb1d426d1b',
   HOST: 'real-time-amazon-data.p.rapidapi.com'
 } as const;
 
@@ -299,12 +299,15 @@ class RapidAPIAmazonService {
     const getCategoryFromQuery = (query: string): string => {
       const categoryMap: Record<string, string> = {
         'electronics': 'Electronics',
+        'smartphones': 'Electronics',
+        'laptops': 'Electronics',
+        'televisions': 'Electronics',
+        'gaming consoles': 'Electronics',
         'fashion': 'Fashion',
         'home garden': 'Home & Garden',
-        'sports': 'Sports',
-        'books': 'Books',
-        'toys games': 'Toys & Games',
-        'beauty personal care': 'Beauty & Personal Care',
+        'sports fitness': 'Sports & Fitness',
+        'books toys': 'Books & Toys',
+        'beauty health': 'Beauty & Health',
         'automotive': 'Automotive'
       };
       return categoryMap[query] || 'Electronics';
@@ -584,17 +587,20 @@ class RapidAPIAmazonService {
       // Define multiple categories to search
       const categories = [
         { query: 'electronics', category: 'Electronics' },
+        { query: 'smartphones', category: 'Electronics' },
+        { query: 'laptops', category: 'Electronics' },
+        { query: 'televisions', category: 'Electronics' },
+        { query: 'gaming consoles', category: 'Electronics' },
         { query: 'fashion', category: 'Fashion' },
         { query: 'home garden', category: 'Home & Garden' },
-        { query: 'sports', category: 'Sports' },
-        { query: 'books', category: 'Books' },
-        { query: 'toys games', category: 'Toys & Games' },
-        { query: 'beauty personal care', category: 'Beauty & Personal Care' },
+        { query: 'sports fitness', category: 'Sports & Fitness' },
+        { query: 'books toys', category: 'Books & Toys' },
+        { query: 'beauty health', category: 'Beauty & Health' },
         { query: 'automotive', category: 'Automotive' }
       ];
 
       const allProducts: ConvertedAmazonProduct[] = [];
-      const productsPerCategory = Math.min(limit / categories.length, 10); // 10 products per category (80 total)
+      const productsPerCategory = Math.min(limit / categories.length, 8); // 8 products per category (88 total)
 
       console.log(`Will search ${categories.length} categories with ${productsPerCategory} products each`);
 

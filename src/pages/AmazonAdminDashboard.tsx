@@ -1084,10 +1084,9 @@ const AmazonAdminDashboard = () => {
                        <SelectItem value="Electronics">Electronics</SelectItem>
                        <SelectItem value="Fashion">Fashion</SelectItem>
                        <SelectItem value="Home & Garden">Home & Garden</SelectItem>
-                       <SelectItem value="Sports">Sports</SelectItem>
-                       <SelectItem value="Books">Books</SelectItem>
-                       <SelectItem value="Toys">Toys</SelectItem>
-                       <SelectItem value="Health & Beauty">Health & Beauty</SelectItem>
+                       <SelectItem value="Sports & Fitness">Sports & Fitness</SelectItem>
+                       <SelectItem value="Books & Toys">Books & Toys</SelectItem>
+                       <SelectItem value="Beauty & Health">Beauty & Health</SelectItem>
                        <SelectItem value="Automotive">Automotive</SelectItem>
                      </SelectContent>
                    </Select>

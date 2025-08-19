@@ -29,10 +29,9 @@ const AmazonStore = () => {
     'Electronics',
     'Fashion',
     'Home & Garden',
-    'Sports',
-    'Books',
-    'Toys',
-    'Health & Beauty',
+    'Sports & Fitness',
+    'Books & Toys',
+    'Beauty & Health',
     'Automotive'
   ];
 

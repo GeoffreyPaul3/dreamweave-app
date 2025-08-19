@@ -1426,7 +1426,7 @@ export class AmazonUAEService {
       // await this.clearAllProducts();
 
       // Sync products by category
-      const categories = ['Electronics', 'Fashion', 'Home & Garden', 'Sports', 'Books', 'Toys', 'Health & Beauty', 'Automotive'];
+      const categories = ['Electronics', 'Fashion', 'Home & Garden', 'Sports & Fitness', 'Books & Toys', 'Beauty & Health', 'Automotive'];
       
       for (const category of categories) {
         const categoryProducts = amazonUAEProducts.filter(product => product.category === category);
