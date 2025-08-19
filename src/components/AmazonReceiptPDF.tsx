@@ -213,7 +213,7 @@ const AmazonReceiptPDF: React.FC<AmazonReceiptPDFProps> = ({ order }) => {
           <div style={{ gridColumn: '1 / -1' }}>
             <strong style={{ color: '#374151' }}>Product:</strong>
             <div style={{ marginTop: '5px' }}>
-              {product ? product.title : `Product ID: ${order.product_id}`}
+            {product[order.product_id]?.title || `Product ID: ${order.product_id}`}
             </div>
             {product && product.description && (
               <div style={{ 
@@ -459,7 +459,7 @@ const AmazonReceiptPDF: React.FC<AmazonReceiptPDFProps> = ({ order }) => {
         }}>
           <strong style={{ color: '#374151' }}>DreamWeave Support:</strong>
           <div>Email: support@dreamweave.com</div>
-          <div>Phone: +265 XXX XXX XXX</div>
+          <div>Phone: +97 155 172 93 07</div>
         </div>
       </div>
     </div>
