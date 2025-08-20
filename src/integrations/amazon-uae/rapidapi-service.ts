@@ -988,7 +988,7 @@ class RapidAPIAmazonService {
 
   async getCurrencyConversionSettings(): Promise<CurrencyConversionSettings | null> {
     try {
-      // Get the first currency conversion setting instead of using .single()
+      // Get the first currency conversion setting
       const { data, error } = await supabase
         .from('currency_conversion_settings' as any)
         .select('*')
@@ -996,46 +996,29 @@ class RapidAPIAmazonService {
 
       if (error) {
         console.error('Error fetching currency conversion settings:', error);
-        // Return default settings if table doesn't exist
-        return {
-          id: 'default',
-          from_currency: 'AED',
-          to_currency: 'MWK',
-          conversion_rate: 1000,
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
+        return null;
       }
 
-      return (data?.[0] as unknown as CurrencyConversionSettings) || {
-        id: 'default',
-        from_currency: 'AED',
-        to_currency: 'MWK',
-        conversion_rate: 1000,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      // If no data found, return null instead of default values
+      if (!data || data.length === 0) {
+        return null;
+      }
+
+      return (data[0] as unknown as CurrencyConversionSettings);
     } catch (error) {
       console.error('Error fetching currency conversion settings:', error);
-      // Return default settings on error
-      return {
-        id: 'default',
-        from_currency: 'AED',
-        to_currency: 'MWK',
-        conversion_rate: 1000,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      return null;
     }
   }
 
   private async getCurrentConversionRate(): Promise<number> {
     try {
       const settings = await this.getCurrencyConversionSettings();
-      return settings?.conversion_rate || 1000; // Default fallback
+      if (settings && settings.conversion_rate) {
+        return settings.conversion_rate;
+      }
+      // Only use default if no settings exist
+      return 1000;
     } catch (error) {
       console.error('Error getting conversion rate:', error);
       return 1000; // Default fallback
