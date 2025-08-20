@@ -1017,7 +1017,15 @@ class RapidAPIAmazonService {
       if (settings && settings.conversion_rate) {
         return settings.conversion_rate;
       }
-      // Only use default if no settings exist
+      
+      // If no settings exist, create a default one with 1000
+      console.log('No conversion settings found, creating default...');
+      const success = await this.updateCurrencyConversionRate(1000);
+      if (success) {
+        return 1000;
+      }
+      
+      // If creation fails, return 1000 as fallback
       return 1000;
     } catch (error) {
       console.error('Error getting conversion rate:', error);
@@ -1027,19 +1035,40 @@ class RapidAPIAmazonService {
 
   async updateCurrencyConversionRate(newRate: number): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('currency_conversion_settings' as any)
-        .upsert({
-          conversion_rate: newRate,
-          from_currency: 'AED',
-          to_currency: 'MWK',
-          is_active: true,
-          updated_at: new Date().toISOString()
-        });
+      // First check if settings exist
+      const existingSettings = await this.getCurrencyConversionSettings();
+      
+      if (existingSettings) {
+        // Update existing settings
+        const { error } = await supabase
+          .from('currency_conversion_settings' as any)
+          .update({
+            conversion_rate: newRate,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingSettings.id);
 
-      if (error) {
-        console.error('Error updating conversion rate:', error);
-        return false;
+        if (error) {
+          console.error('Error updating conversion rate:', error);
+          return false;
+        }
+      } else {
+        // Create new settings
+        const { error } = await supabase
+          .from('currency_conversion_settings' as any)
+          .insert({
+            conversion_rate: newRate,
+            from_currency: 'AED',
+            to_currency: 'MWK',
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) {
+          console.error('Error creating conversion rate settings:', error);
+          return false;
+        }
       }
 
       return true;
