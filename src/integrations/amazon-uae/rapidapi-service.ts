@@ -1000,7 +1000,7 @@ class RapidAPIAmazonService {
           id: 'default',
           from_currency: 'AED',
           to_currency: 'MWK',
-          conversion_rate: 1250,
+          conversion_rate: 1000,
           is_active: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -1011,7 +1011,7 @@ class RapidAPIAmazonService {
         id: 'default',
         from_currency: 'AED',
         to_currency: 'MWK',
-        conversion_rate: 1250,
+        conversion_rate: 1000,
         is_active: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -1023,7 +1023,7 @@ class RapidAPIAmazonService {
         id: 'default',
         from_currency: 'AED',
         to_currency: 'MWK',
-        conversion_rate: 1250,
+        conversion_rate: 1000,
         is_active: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -1034,10 +1034,10 @@ class RapidAPIAmazonService {
   private async getCurrentConversionRate(): Promise<number> {
     try {
       const settings = await this.getCurrencyConversionSettings();
-      return settings?.conversion_rate || 1250; // Default fallback
+      return settings?.conversion_rate || 1000; // Default fallback
     } catch (error) {
       console.error('Error getting conversion rate:', error);
-      return 1250; // Default fallback
+      return 1000; // Default fallback
     }
   }
 

@@ -235,8 +235,9 @@ const AmazonAdminDashboard = () => {
             description: `UAE Dirham to Kwacha conversion rate updated to ${rate}. All product prices have been updated accordingly.`,
           });
           setCurrentConversionRate(rate);
-          // Refresh the products data to show updated prices
-          fetchData();
+          // Refresh only the products data to show updated prices, without re-fetching conversion rate
+          const productsData = await rapidAPIAmazonService.fetchProducts();
+          setProducts(productsData);
         } else {
           toast({
             title: "Partial Update",
