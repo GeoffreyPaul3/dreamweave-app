@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -223,7 +224,7 @@ const RequestOrder = () => {
           {/* Header Section */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">
-              <Package className="w-12 h-12 text-blue-600 mr-3" />
+             
               <h1 className="text-4xl font-bold text-gray-900">Request Items from Dubai UAE</h1>
             </div>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
