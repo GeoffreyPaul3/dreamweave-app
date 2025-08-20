@@ -6,7 +6,15 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { AmazonProduct, AmazonOrder, AmazonUser, CurrencyConversionSettings, RequestOrder } from '@/integrations/amazon-uae/types';
-import { sendRequestOrderPricedEmail, sendRequestOrderShippedEmail, sendRequestOrderDeliveredEmail, sendEmail } from '@/lib/email';
+import { 
+  sendRequestOrderPricedEmail, 
+  sendRequestOrderShippedEmail, 
+  sendRequestOrderDeliveredEmail, 
+  sendRequestOrderRejectedEmail,
+  sendRequestOrderProcessingEmail,
+  sendRequestOrderReadyForPickupEmail,
+  sendEmail 
+} from '@/lib/email';
 
 // API Configuration
 const RAPIDAPI_CONFIG = {
@@ -1366,32 +1374,55 @@ class RapidAPIAmazonService {
           const userEmail = orderData.profiles?.email;
           const userName = orderData.profiles?.full_name || 'Valued Customer';
 
-          if (userEmail) {
-            if (status === 'priced' && adminPrice) {
-              await sendRequestOrderPricedEmail(
-                userEmail,
-                userName,
-                orderData.item_name,
-                adminPrice,
-                requestId
-              );
-            } else if (status === 'shipped') {
-              await sendRequestOrderShippedEmail(
-                userEmail,
-                userName,
-                orderData.item_name,
-                orderData.admin_price || 0,
-                requestId
-              );
-            } else if (status === 'delivered') {
-              await sendRequestOrderDeliveredEmail(
-                userEmail,
-                userName,
-                orderData.item_name,
-                requestId
-              );
-            }
-          }
+                     if (userEmail) {
+             if (status === 'priced' && adminPrice) {
+               await sendRequestOrderPricedEmail(
+                 userEmail,
+                 userName,
+                 orderData.item_name,
+                 adminPrice,
+                 requestId
+               );
+             } else if (status === 'processing') {
+               await sendRequestOrderProcessingEmail(
+                 userEmail,
+                 userName,
+                 orderData.item_name,
+                 requestId
+               );
+             } else if (status === 'shipped') {
+               await sendRequestOrderShippedEmail(
+                 userEmail,
+                 userName,
+                 orderData.item_name,
+                 orderData.admin_price || 0,
+                 requestId
+               );
+             } else if (status === 'ready_for_pickup') {
+               await sendRequestOrderReadyForPickupEmail(
+                 userEmail,
+                 userName,
+                 orderData.item_name,
+                 requestId,
+                 orderData.admin_notes // Use admin notes for pickup location if needed
+               );
+             } else if (status === 'delivered') {
+               await sendRequestOrderDeliveredEmail(
+                 userEmail,
+                 userName,
+                 orderData.item_name,
+                 requestId
+               );
+             } else if (status === 'rejected' || status === 'cancelled') {
+               await sendRequestOrderRejectedEmail(
+                 userEmail,
+                 userName,
+                 orderData.item_name,
+                 requestId,
+                 orderData.admin_notes // Use admin notes for rejection reason
+               );
+             }
+           }
         }
       } catch (emailError) {
         console.error('Error sending email notification:', emailError);

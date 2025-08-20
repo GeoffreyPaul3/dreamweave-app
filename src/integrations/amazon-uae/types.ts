@@ -126,7 +126,7 @@ export interface RequestOrder {
   special_requirements?: string;
   image_url?: string; // DEPRECATED: Use image_urls instead
   image_urls?: string[]; // Array of image URLs for multiple images
-  status: 'pending' | 'reviewed' | 'priced' | 'payment_pending' | 'deposit_paid' | 'final_payment_pending' | 'sourcing' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'pending' | 'reviewed' | 'priced' | 'payment_pending' | 'deposit_paid' | 'final_payment_pending' | 'sourcing' | 'processing' | 'shipped' | 'ready_for_pickup' | 'delivered' | 'rejected' | 'cancelled';
   admin_price?: number;
   admin_notes?: string;
   deposit_amount?: number;
