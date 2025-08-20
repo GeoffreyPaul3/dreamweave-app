@@ -112,3 +112,27 @@ export interface CurrencyConversionSettings {
   created_at: string;
   updated_at: string;
 }
+
+export interface RequestOrder {
+  id: string;
+  user_id: string;
+  item_name: string;
+  description: string;
+  quantity: number;
+  preferred_brand?: string;
+  budget_range?: string;
+  delivery_address: string;
+  phone_number: string;
+  special_requirements?: string;
+  image_url?: string; // DEPRECATED: Use image_urls instead
+  image_urls?: string[]; // Array of image URLs for multiple images
+  status: 'pending' | 'reviewed' | 'priced' | 'payment_pending' | 'deposit_paid' | 'final_payment_pending' | 'sourcing' | 'shipped' | 'delivered' | 'cancelled';
+  admin_price?: number;
+  admin_notes?: string;
+  deposit_amount?: number;
+  deposit_paid: boolean;
+  deposit_payment_id?: string;
+  paychangu_reference?: string;
+  created_at: string;
+  updated_at: string;
+}

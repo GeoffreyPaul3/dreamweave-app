@@ -99,6 +99,26 @@ const Header = () => {
             >
                Dubai Store
             </Link>
+            <Link
+              to="/request-order"
+              className={`text-sm font-medium transition-colors ${
+                isActive('/request-order')
+                  ? 'text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Request Items
+            </Link>
+            <Link
+              to="/pay-requested-orders"
+              className={`text-sm font-medium transition-colors ${
+                isActive('/pay-requested-orders')
+                  ? 'text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Pay Requested Orders
+            </Link>
             {isAmazonRoute && (
               <Link
                 to="/amazon/cart"
@@ -317,6 +337,20 @@ const Header = () => {
                         onClick={() => handleNavigation('/about')}
                       >
                         About
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start"
+                        onClick={() => handleNavigation('/request-order')}
+                      >
+                        Request Items
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start"
+                        onClick={() => handleNavigation('/pay-requested-orders')}
+                      >
+                        Pay Requested Orders
                       </Button>
                     </div>
                   </div>

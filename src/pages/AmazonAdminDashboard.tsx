@@ -27,7 +27,7 @@ import {
   X
 } from 'lucide-react';
 import { rapidAPIAmazonService } from '@/integrations/amazon-uae/rapidapi-service';
-import { AmazonProduct, AmazonOrder, AmazonUser } from '@/integrations/amazon-uae/types';
+import { AmazonProduct, AmazonOrder, AmazonUser, RequestOrder } from '@/integrations/amazon-uae/types';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -43,6 +43,7 @@ const AmazonAdminDashboard = () => {
   const [products, setProducts] = useState<AmazonProduct[]>([]);
   const [orders, setOrders] = useState<AmazonOrder[]>([]);
   const [users, setUsers] = useState<AmazonUser[]>([]);
+  const [requestOrders, setRequestOrders] = useState<RequestOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
@@ -61,6 +62,13 @@ const AmazonAdminDashboard = () => {
   const [isUpdatingBrands, setIsUpdatingBrands] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [isDeletingProducts, setIsDeletingProducts] = useState(false);
+  const [editingRequestOrder, setEditingRequestOrder] = useState<RequestOrder | null>(null);
+  const [showRequestOrderDialog, setShowRequestOrderDialog] = useState(false);
+  const [requestOrderSearchTerm, setRequestOrderSearchTerm] = useState('');
+  const [selectedRequestStatus, setSelectedRequestStatus] = useState<string>('');
+  const [editingPrice, setEditingPrice] = useState<string>('');
+  const [editingNotes, setEditingNotes] = useState<string>('');
+  const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
   const [newProduct, setNewProduct] = useState({
     title: '',
     brand: '',
@@ -99,22 +107,33 @@ const AmazonAdminDashboard = () => {
     fetchData();
   }, [user, isAdmin, toast]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+      }
+    };
+  }, [saveTimeout]);
+
   const fetchData = async () => {
     setLoading(true);
     try {
       console.log('rapidAPIAmazonService:', rapidAPIAmazonService);
       console.log('fetchProducts method:', rapidAPIAmazonService.fetchProducts);
       
-      const [productsData, ordersData, usersData, conversionSettings] = await Promise.all([
+      const [productsData, ordersData, usersData, requestOrdersData, conversionSettings] = await Promise.all([
         rapidAPIAmazonService.fetchProducts(),
         rapidAPIAmazonService.getAllOrders(),
         rapidAPIAmazonService.getVerifiedUsers(),
+        rapidAPIAmazonService.getAllRequestOrders(),
         rapidAPIAmazonService.getCurrencyConversionSettings()
       ]);
       
       setProducts(productsData);
       setOrders(ordersData);
       setUsers(usersData);
+      setRequestOrders(requestOrdersData);
       
       if (conversionSettings) {
         setCurrentConversionRate(conversionSettings.conversion_rate);
@@ -543,6 +562,88 @@ const AmazonAdminDashboard = () => {
     }
   };
 
+  const debouncedSave = (requestId: string, status: string, adminPrice?: number, adminNotes?: string) => {
+    if (saveTimeout) {
+      clearTimeout(saveTimeout);
+    }
+    
+    const timeout = setTimeout(async () => {
+      try {
+        const result = await rapidAPIAmazonService.updateRequestOrderStatus(requestId, status, adminPrice, adminNotes);
+        if (result) {
+          fetchData();
+        }
+      } catch (error) {
+        console.error('Error saving request order:', error);
+      }
+    }, 1000); // Save after 1 second of no typing
+    
+    setSaveTimeout(timeout);
+  };
+
+  const handleUpdateRequestOrderStatus = async (requestId: string, status: string, adminPrice?: number, adminNotes?: string, closeDialog: boolean = false) => {
+    try {
+      const result = await rapidAPIAmazonService.updateRequestOrderStatus(requestId, status, adminPrice, adminNotes);
+      
+      if (result) {
+        if (closeDialog) {
+          toast({
+            title: "Request Updated Successfully",
+            description: `Request status updated to ${status}. ${adminPrice ? `Price set to MWK ${adminPrice.toLocaleString()}` : ''}`,
+          });
+          setShowRequestOrderDialog(false);
+          setEditingRequestOrder(null);
+        }
+        fetchData();
+      } else {
+        toast({
+          title: "Update Failed",
+          description: "Failed to update request status",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error updating request order status:', error);
+      toast({
+        title: "Update Error",
+        description: "Failed to update request status",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleUpdateRequestOrderDeposit = async (requestId: string, depositPaid: boolean, paymentId?: string) => {
+    try {
+      toast({
+        title: "Updating Deposit Status",
+        description: `Marking deposit as ${depositPaid ? 'paid' : 'unpaid'}...`,
+      });
+
+      const result = await rapidAPIAmazonService.updateRequestOrderDeposit(requestId, depositPaid, paymentId);
+      
+      if (result) {
+        toast({
+          title: "Deposit Status Updated",
+          description: `Deposit marked as ${depositPaid ? 'paid' : 'unpaid'}`,
+        });
+        fetchData();
+      } else {
+        toast({
+          title: "Update Failed",
+          description: "Failed to update deposit status",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error updating deposit status:', error);
+      toast({
+        title: "Update Error",
+        description: "Failed to update deposit status",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleDownloadReceipt = async (order: AmazonOrder) => {
     setIsGeneratingPDF(true);
     
@@ -552,6 +653,8 @@ const AmazonAdminDashboard = () => {
       tempContainer.style.position = 'absolute';
       tempContainer.style.left = '-9999px';
       tempContainer.style.top = '0';
+      tempContainer.style.width = '800px';
+      tempContainer.style.backgroundColor = '#ffffff';
       document.body.appendChild(tempContainer);
       
       // Render the receipt component
@@ -564,48 +667,68 @@ const AmazonAdminDashboard = () => {
       const root = createRoot(tempContainer);
       root.render(receiptElement);
       
-      // Wait for the component to render
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait for the component to render and images to load
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Get the receipt element
       const receiptDiv = tempContainer.querySelector('#receipt-pdf') as HTMLElement;
       
-      if (receiptDiv) {
-        // Convert to canvas
-        const canvas = await html2canvas(receiptDiv, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff'
-        });
-        
-        // Create PDF
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgWidth = 210;
-        const pageHeight = 295;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        let heightLeft = imgHeight;
-        let position = 0;
-        
+      if (!receiptDiv) {
+        throw new Error('Receipt element not found');
+      }
+      
+      // Wait for any images to load
+      const images = receiptDiv.querySelectorAll('img');
+      if (images.length > 0) {
+        await Promise.all(
+          Array.from(images).map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise((resolve, reject) => {
+              img.onload = resolve;
+              img.onerror = reject;
+            });
+          })
+        );
+      }
+      
+      // Convert to canvas with better settings
+      const canvas = await html2canvas(receiptDiv, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 800,
+        height: receiptDiv.scrollHeight,
+        scrollX: 0,
+        scrollY: 0
+      });
+      
+      // Create PDF
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
-        
-        while (heightLeft >= 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
-        }
-        
-        // Download PDF
-        pdf.save(`receipt-${order.order_number}.pdf`);
-        
-        toast({
-          title: "PDF Receipt Downloaded",
-          description: "Beautiful PDF receipt has been downloaded",
-        });
       }
+      
+      // Download PDF
+      pdf.save(`receipt-${order.order_number}.pdf`);
+      
+      toast({
+        title: "PDF Receipt Downloaded",
+        description: "Beautiful PDF receipt has been downloaded",
+      });
       
       // Clean up
       root.unmount();
@@ -634,10 +757,31 @@ const AmazonAdminDashboard = () => {
     }
   };
 
+  const getRequestStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'reviewed': return 'bg-blue-100 text-blue-800';
+      case 'priced': return 'bg-purple-100 text-purple-800';
+      case 'deposit_paid': return 'bg-green-100 text-green-800';
+      case 'sourcing': return 'bg-indigo-100 text-indigo-800';
+      case 'shipped': return 'bg-orange-100 text-orange-800';
+      case 'delivered': return 'bg-green-100 text-green-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          order.delivery_address.full_name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || !selectedStatus || order.status === selectedStatus;
+    return matchesSearch && matchesStatus;
+  });
+
+  const filteredRequestOrders = requestOrders.filter(request => {
+    const matchesSearch = request.item_name.toLowerCase().includes(requestOrderSearchTerm.toLowerCase()) ||
+                         request.phone_number.toLowerCase().includes(requestOrderSearchTerm.toLowerCase());
+    const matchesStatus = selectedRequestStatus === 'all' || !selectedRequestStatus || request.status === selectedRequestStatus;
     return matchesSearch && matchesStatus;
   });
 
@@ -755,6 +899,7 @@ const AmazonAdminDashboard = () => {
            <TabsList>
              <TabsTrigger value="orders">Orders</TabsTrigger>
              <TabsTrigger value="products">Products</TabsTrigger>
+             <TabsTrigger value="request-orders">Request Orders</TabsTrigger>
              <TabsTrigger value="settings">Settings</TabsTrigger>
            </TabsList>
 
@@ -983,6 +1128,112 @@ const AmazonAdminDashboard = () => {
                               </Button>
                            </div>
                          </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Request Orders Tab */}
+          <TabsContent value="request-orders" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Request Orders Management</CardTitle>
+                <div className="flex gap-4">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      placeholder="Search requests..."
+                      value={requestOrderSearchTerm}
+                      onChange={(e) => setRequestOrderSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Select value={selectedRequestStatus} onValueChange={setSelectedRequestStatus}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="reviewed">Reviewed</SelectItem>
+                      <SelectItem value="priced">Priced</SelectItem>
+                      <SelectItem value="deposit_paid">Deposit Paid</SelectItem>
+                      <SelectItem value="sourcing">Sourcing</SelectItem>
+                      <SelectItem value="shipped">Shipped</SelectItem>
+                      <SelectItem value="delivered">Delivered</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Item Name</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredRequestOrders.map((request) => (
+                      <TableRow key={request.id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{request.item_name}</div>
+                            <div className="text-sm text-gray-600">Qty: {request.quantity}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{request.delivery_address.split(',')[0]}</div>
+                            <div className="text-sm text-gray-600">{request.phone_number}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{request.phone_number}</TableCell>
+                        <TableCell>
+                          <Badge className={getRequestStatusColor(request.status)}>
+                            {request.status.replace('_', ' ')}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {request.admin_price ? (
+                            <div>
+                              <div className="font-medium">MWK {request.admin_price.toLocaleString()}</div>
+                              {request.deposit_amount && (
+                                <div className="text-sm text-gray-600">
+                                  Deposit: MWK {request.deposit_amount.toLocaleString()}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-gray-500">Not priced</span>
+                          )}
+                        </TableCell>
+                        <TableCell>{new Date(request.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                                                             onClick={() => {
+                                 setEditingRequestOrder(request);
+                                 setEditingPrice(request.admin_price?.toString() || '');
+                                 setEditingNotes(request.admin_notes || '');
+                                 setShowRequestOrderDialog(true);
+                               }}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -1335,53 +1586,253 @@ const AmazonAdminDashboard = () => {
            </DialogContent>
          </Dialog>
 
-        {/* Edit Order Dialog */}
-        <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Update Order Status</DialogTitle>
-            </DialogHeader>
-            {editingOrder && (
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Order Number</label>
-                  <Input value={editingOrder.order_number} disabled />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Status</label>
-                  <Select 
-                    value={editingOrder.status} 
-                    onValueChange={(value) => handleUpdateOrderStatus(editingOrder.id, value as AmazonOrder['status'])}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="processing">Processing</SelectItem>
-                      <SelectItem value="shipped">Shipped</SelectItem>
-                      <SelectItem value="delivered">Delivered</SelectItem>
-                      <SelectItem value="successful">Successful</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Admin Notes</label>
-                  <Textarea placeholder="Add notes about order progress..." />
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={() => setShowOrderDialog(false)}>
-                    Update Order
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowOrderDialog(false)}>
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-                 </Dialog>
+                 {/* Edit Order Dialog */}
+         <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
+           <DialogContent>
+             <DialogHeader>
+               <DialogTitle>Update Order Status</DialogTitle>
+             </DialogHeader>
+             {editingOrder && (
+               <div className="space-y-4">
+                 <div>
+                   <label className="text-sm font-medium">Order Number</label>
+                   <Input value={editingOrder.order_number} disabled />
+                 </div>
+                 <div>
+                   <label className="text-sm font-medium">Status</label>
+                   <Select 
+                     value={editingOrder.status} 
+                     onValueChange={(value) => handleUpdateOrderStatus(editingOrder.id, value as AmazonOrder['status'])}
+                   >
+                     <SelectTrigger>
+                       <SelectValue placeholder="Select status" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="pending">Pending</SelectItem>
+                       <SelectItem value="processing">Processing</SelectItem>
+                       <SelectItem value="shipped">Shipped</SelectItem>
+                       <SelectItem value="delivered">Delivered</SelectItem>
+                       <SelectItem value="successful">Successful</SelectItem>
+                       <SelectItem value="cancelled">Cancelled</SelectItem>
+                     </SelectContent>
+                   </Select>
+                 </div>
+                 <div>
+                   <label className="text-sm font-medium">Admin Notes</label>
+                   <Textarea placeholder="Add notes about order progress..." />
+                 </div>
+                 <div className="flex gap-2">
+                   <Button onClick={() => setShowOrderDialog(false)}>
+                     Update Order
+                   </Button>
+                   <Button variant="outline" onClick={() => setShowOrderDialog(false)}>
+                     Cancel
+                   </Button>
+                 </div>
+               </div>
+             )}
+           </DialogContent>
+                  </Dialog>
+
+                   {/* Edit Request Order Dialog */}
+          <Dialog open={showRequestOrderDialog} onOpenChange={setShowRequestOrderDialog}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+             <DialogHeader>
+               <DialogTitle>Update Request Order</DialogTitle>
+             </DialogHeader>
+             {editingRequestOrder && (
+               <div className="space-y-4">
+                 <div className="grid grid-cols-2 gap-4">
+                   <div>
+                     <label className="text-sm font-medium">Item Name</label>
+                     <Input value={editingRequestOrder.item_name} disabled />
+                   </div>
+                   <div>
+                     <label className="text-sm font-medium">Quantity</label>
+                     <Input value={editingRequestOrder.quantity.toString()} disabled />
+                   </div>
+                 </div>
+                 
+                 <div>
+                   <label className="text-sm font-medium">Description</label>
+                   <Textarea value={editingRequestOrder.description} disabled rows={3} />
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-4">
+                   <div>
+                     <label className="text-sm font-medium">Preferred Brand</label>
+                     <Input value={editingRequestOrder.preferred_brand || ''} disabled />
+                   </div>
+                   <div>
+                     <label className="text-sm font-medium">Budget Range</label>
+                     <Input value={editingRequestOrder.budget_range || ''} disabled />
+                   </div>
+                 </div>
+                 
+                 <div>
+                   <label className="text-sm font-medium">Delivery Address</label>
+                   <Textarea value={editingRequestOrder.delivery_address} disabled rows={2} />
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-4">
+                   <div>
+                     <label className="text-sm font-medium">Phone Number</label>
+                     <Input value={editingRequestOrder.phone_number} disabled />
+                   </div>
+                   <div>
+                     <label className="text-sm font-medium">Current Status</label>
+                     <Input value={editingRequestOrder.status.replace('_', ' ')} disabled />
+                   </div>
+                 </div>
+                 
+                 {editingRequestOrder.special_requirements && (
+                   <div>
+                     <label className="text-sm font-medium">Special Requirements</label>
+                     <Textarea value={editingRequestOrder.special_requirements} disabled rows={2} />
+                   </div>
+                 )}
+                 
+                 {(editingRequestOrder.image_urls && editingRequestOrder.image_urls.length > 0) && (
+                   <div>
+                     <label className="text-sm font-medium">Item Images</label>
+                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+                       {editingRequestOrder.image_urls.map((imageUrl, index) => (
+                         <div key={index} className="relative">
+                           <img 
+                             src={imageUrl} 
+                             alt={`Requested item ${index + 1}`} 
+                             className="w-full h-32 object-cover rounded-lg border"
+                           />
+                         </div>
+                       ))}
+                     </div>
+                   </div>
+                 )}
+                 
+                 {/* Fallback for old single image_url field */}
+                 {(!editingRequestOrder.image_urls || editingRequestOrder.image_urls.length === 0) && editingRequestOrder.image_url && (
+                   <div>
+                     <label className="text-sm font-medium">Item Image</label>
+                     <img 
+                       src={editingRequestOrder.image_url} 
+                       alt="Requested item" 
+                       className="w-32 h-32 object-cover rounded-lg border"
+                     />
+                   </div>
+                 )}
+                 
+                 <div className="border-t pt-4">
+                   <h4 className="font-medium mb-3">Admin Actions</h4>
+                   
+                   <div className="grid grid-cols-2 gap-4">
+                     <div>
+                       <label className="text-sm font-medium">Set Price (MWK)</label>
+                                               <Input 
+                          type="number"
+                          placeholder="Enter price"
+                          value={editingPrice}
+                          onChange={(e) => {
+                            setEditingPrice(e.target.value);
+                            const price = parseFloat(e.target.value);
+                            if (!isNaN(price) && price > 0) {
+                              debouncedSave(
+                                editingRequestOrder.id, 
+                                'priced', 
+                                price, 
+                                editingNotes
+                              );
+                            }
+                          }}
+                        />
+                     </div>
+                     <div>
+                       <label className="text-sm font-medium">Update Status</label>
+                                               <Select 
+                          value={editingRequestOrder.status}
+                          onValueChange={(value) => {
+                            const price = parseFloat(editingPrice);
+                            handleUpdateRequestOrderStatus(
+                              editingRequestOrder.id, 
+                              value, 
+                              !isNaN(price) && price > 0 ? price : editingRequestOrder.admin_price, 
+                              editingNotes,
+                              true // Close dialog when status is changed
+                            );
+                          }}
+                        >
+                         <SelectTrigger>
+                           <SelectValue placeholder="Select status" />
+                         </SelectTrigger>
+                         <SelectContent>
+                           <SelectItem value="pending">Pending</SelectItem>
+                           <SelectItem value="reviewed">Reviewed</SelectItem>
+                           <SelectItem value="priced">Priced</SelectItem>
+                           <SelectItem value="deposit_paid">Deposit Paid</SelectItem>
+                           <SelectItem value="sourcing">Sourcing</SelectItem>
+                           <SelectItem value="shipped">Shipped</SelectItem>
+                           <SelectItem value="delivered">Delivered</SelectItem>
+                           <SelectItem value="cancelled">Cancelled</SelectItem>
+                         </SelectContent>
+                       </Select>
+                     </div>
+                   </div>
+                   
+                   <div className="mt-4">
+                     <label className="text-sm font-medium">Admin Notes</label>
+                                           <Textarea 
+                        placeholder="Add notes about this request..."
+                        value={editingNotes}
+                        onChange={(e) => {
+                          setEditingNotes(e.target.value);
+                          const price = parseFloat(editingPrice);
+                          debouncedSave(
+                            editingRequestOrder.id, 
+                            editingRequestOrder.status, 
+                            !isNaN(price) && price > 0 ? price : editingRequestOrder.admin_price, 
+                            e.target.value
+                          );
+                        }}
+                        rows={3}
+                      />
+                   </div>
+                   
+                                       {(editingRequestOrder.admin_price || parseFloat(editingPrice) > 0) && (
+                      <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                        <h5 className="font-medium text-blue-900 mb-2">Payment Information</h5>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-600">Total Price:</span>
+                            <div className="font-medium">MWK {(parseFloat(editingPrice) || editingRequestOrder.admin_price || 0).toLocaleString()}</div>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Deposit Required (50%):</span>
+                            <div className="font-medium">MWK {((parseFloat(editingPrice) || editingRequestOrder.admin_price || 0) * 0.5).toLocaleString()}</div>
+                          </div>
+                        </div>
+                       <div className="mt-3">
+                         <Button
+                           variant={editingRequestOrder.deposit_paid ? "outline" : "default"}
+                           onClick={() => handleUpdateRequestOrderDeposit(
+                             editingRequestOrder.id, 
+                             !editingRequestOrder.deposit_paid
+                           )}
+                         >
+                           {editingRequestOrder.deposit_paid ? 'Mark Deposit as Unpaid' : 'Mark Deposit as Paid'}
+                         </Button>
+                       </div>
+                     </div>
+                   )}
+                 </div>
+                 
+                 <div className="flex gap-2">
+                   <Button variant="outline" onClick={() => setShowRequestOrderDialog(false)}>
+                     Close
+                   </Button>
+                 </div>
+               </div>
+             )}
+           </DialogContent>
+         </Dialog>
        </div>
        <Footer />
      </div>

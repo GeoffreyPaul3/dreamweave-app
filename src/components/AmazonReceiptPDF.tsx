@@ -213,7 +213,7 @@ const AmazonReceiptPDF: React.FC<AmazonReceiptPDFProps> = ({ order }) => {
           <div style={{ gridColumn: '1 / -1' }}>
             <strong style={{ color: '#374151' }}>Product:</strong>
             <div style={{ marginTop: '5px' }}>
-            {product[order.product_id]?.title || `Product ID: ${order.product_id}`}
+            {product?.title || `Product ID: ${order.product_id}`}
             </div>
             {product && product.description && (
               <div style={{ 

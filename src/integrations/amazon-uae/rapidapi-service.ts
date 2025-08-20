@@ -5,7 +5,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { supabase } from '@/integrations/supabase/client';
-import { AmazonProduct, AmazonOrder, AmazonUser, CurrencyConversionSettings } from '@/integrations/amazon-uae/types';
+import { AmazonProduct, AmazonOrder, AmazonUser, CurrencyConversionSettings, RequestOrder } from '@/integrations/amazon-uae/types';
+import { sendRequestOrderPricedEmail, sendRequestOrderShippedEmail, sendRequestOrderDeliveredEmail, sendEmail } from '@/lib/email';
 
 // API Configuration
 const RAPIDAPI_CONFIG = {
@@ -1264,6 +1265,211 @@ class RapidAPIAmazonService {
       return true;
     } catch (error) {
       console.error('Error updating order status:', error);
+      return false;
+    }
+  }
+
+  // Request Orders Methods
+  async getAllRequestOrders(): Promise<RequestOrder[]> {
+    try {
+      const { data, error } = await supabase
+        .from('request_orders' as any)
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching request orders:', error);
+        return [];
+      }
+
+      return (data as unknown as RequestOrder[]) || [];
+    } catch (error) {
+      console.error('Error fetching request orders:', error);
+      return [];
+    }
+  }
+
+  async getUserRequestOrders(userId: string): Promise<RequestOrder[]> {
+    try {
+      const { data, error } = await supabase
+        .from('request_orders' as any)
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching user request orders:', error);
+        return [];
+      }
+
+      return (data as unknown as RequestOrder[]) || [];
+    } catch (error) {
+      console.error('Error fetching user request orders:', error);
+      return [];
+    }
+  }
+
+  async updateRequestOrderStatus(requestId: string, status: string, adminPrice?: number, adminNotes?: string): Promise<boolean> {
+    try {
+      const updateData: any = {
+        status,
+        updated_at: new Date().toISOString()
+      };
+
+      if (adminPrice !== undefined) {
+        updateData.admin_price = adminPrice;
+        updateData.deposit_amount = adminPrice * 0.5; // 50% deposit
+      }
+
+      if (adminNotes !== undefined) {
+        updateData.admin_notes = adminNotes;
+      }
+
+      const { error } = await supabase
+        .from('request_orders' as any)
+        .update(updateData)
+        .eq('id', requestId);
+
+      if (error) {
+        console.error('Error updating request order status:', error);
+        return false;
+      }
+
+      // Send email notifications based on status change
+      try {
+        // Get the updated order with user information
+        const { data: orderData, error: fetchError } = await supabase
+          .from('request_orders' as any)
+          .select(`
+            *,
+            profiles:user_id (
+              email,
+              full_name
+            )
+          `)
+          .eq('id', requestId)
+          .single();
+
+        if (!fetchError && orderData) {
+          const userEmail = orderData.profiles?.email;
+          const userName = orderData.profiles?.full_name || 'Valued Customer';
+
+          if (userEmail) {
+            if (status === 'priced' && adminPrice) {
+              await sendRequestOrderPricedEmail(
+                userEmail,
+                userName,
+                orderData.item_name,
+                adminPrice,
+                requestId
+              );
+            } else if (status === 'shipped') {
+              await sendRequestOrderShippedEmail(
+                userEmail,
+                userName,
+                orderData.item_name,
+                orderData.admin_price || 0,
+                requestId
+              );
+            } else if (status === 'delivered') {
+              await sendRequestOrderDeliveredEmail(
+                userEmail,
+                userName,
+                orderData.item_name,
+                requestId
+              );
+            }
+          }
+        }
+      } catch (emailError) {
+        console.error('Error sending email notification:', emailError);
+        // Don't fail the status update if email fails
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error updating request order status:', error);
+      return false;
+    }
+  }
+
+  async updateRequestOrderDeposit(requestId: string, depositPaid: boolean, paymentId?: string): Promise<boolean> {
+    try {
+      const updateData: any = {
+        deposit_paid: depositPaid,
+        updated_at: new Date().toISOString()
+      };
+
+      if (paymentId) {
+        updateData.deposit_payment_id = paymentId;
+      }
+
+      const { error } = await supabase
+        .from('request_orders' as any)
+        .update(updateData)
+        .eq('id', requestId);
+
+      if (error) {
+        console.error('Error updating request order deposit:', error);
+        return false;
+      }
+
+      // Send email notification when deposit is paid
+      if (depositPaid) {
+        try {
+          // Get the order with user information
+          const { data: orderData, error: fetchError } = await supabase
+            .from('request_orders' as any)
+            .select(`
+              *,
+              profiles:user_id (
+                email,
+                full_name
+              )
+            `)
+            .eq('id', requestId)
+            .single();
+
+          if (!fetchError && orderData) {
+            const userEmail = orderData.profiles?.email;
+            const userName = orderData.profiles?.full_name || 'Valued Customer';
+
+            if (userEmail) {
+              // Send deposit confirmation email
+              const subject = 'Deposit Payment Confirmed!';
+              const html = `
+                <h1>Thank you ${userName}!</h1>
+                <p>Your deposit payment for "${orderData.item_name}" has been confirmed.</p>
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <h3>Order Details:</h3>
+                  <p><strong>Item:</strong> ${orderData.item_name}</p>
+                  <p><strong>Total Price:</strong> MWK ${(orderData.admin_price || 0).toLocaleString()}</p>
+                  <p><strong>Deposit Paid:</strong> MWK ${((orderData.admin_price || 0) * 0.5).toLocaleString()}</p>
+                </div>
+                <p>We'll notify you when your order is ready to ship.</p>
+                <a href="${import.meta.env.VITE_SITE_URL}/pay-requested-orders" style="
+                  display: inline-block;
+                  background-color: #4F46E5;
+                  color: white;
+                  padding: 12px 24px;
+                  text-decoration: none;
+                  border-radius: 4px;
+                  margin-top: 16px;
+                ">View Your Orders</a>
+              `;
+
+              await sendEmail({ to: userEmail, subject, html });
+            }
+          }
+        } catch (emailError) {
+          console.error('Error sending deposit confirmation email:', emailError);
+          // Don't fail the deposit update if email fails
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error updating request order deposit:', error);
       return false;
     }
   }

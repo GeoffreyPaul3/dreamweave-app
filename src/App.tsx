@@ -32,6 +32,9 @@ import AmazonOrderSuccess from "./pages/AmazonOrderSuccess";
 import AmazonOrders from "./pages/AmazonOrders";
 import AmazonAdminDashboard from "./pages/AmazonAdminDashboard";
 import AmazonPaymentCallback from "./pages/AmazonPaymentCallback";
+import RequestOrder from "./pages/RequestOrder";
+import PayRequestedOrders from "./pages/PayRequestedOrders";
+import RequestOrderPaymentCallback from "./pages/RequestOrderPaymentCallback";
 import { AmazonCartProvider } from "./contexts/AmazonCartContext";
 
 const queryClient = new QueryClient();
@@ -68,6 +71,9 @@ const AppContent = () => {
       <Route path="/amazon/orders" element={<AmazonOrders />} />
       <Route path="/amazon/admin" element={<AmazonAdminDashboard />} />
       <Route path="/amazon/payment-callback" element={<AmazonPaymentCallback />} />
+      <Route path="/request-order" element={<RequestOrder />} />
+      <Route path="/pay-requested-orders" element={<PayRequestedOrders />} />
+      <Route path="/request-order/payment-callback" element={<RequestOrderPaymentCallback />} />
       
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
