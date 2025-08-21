@@ -582,3 +582,73 @@ export const sendRequestOrderReadyForPickupEmail = async (
 
   return sendEmail({ to: userEmail, subject, html });
 }; 
+
+// Password Reset Email
+export const sendPasswordResetEmail = async (
+  userEmail: string,
+  resetLink: string
+) => {
+  const subject = 'Reset Your DreamWeave Password';
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #4F46E5 0%, #667eea 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+        <h1 style="margin: 0; font-size: 28px;">🔐 Password Reset Request</h1>
+        <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">DreamWeave</p>
+      </div>
+      
+      <div style="background: white; padding: 30px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #333; margin-bottom: 20px;">Hello!</h2>
+        
+        <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">
+          We received a request to reset your password for your DreamWeave account. If you didn't make this request, you can safely ignore this email.
+        </p>
+        
+        <div style="background: #f8f9fa; border: 2px solid #4F46E5; padding: 25px; margin: 25px 0; border-radius: 10px; text-align: center;">
+          <h3 style="color: #4F46E5; margin: 0 0 20px 0;">Reset Your Password</h3>
+          <p style="color: #555; margin-bottom: 25px;">
+            Click the button below to create a new password for your account.
+          </p>
+          
+          <a href="${resetLink}" style="
+            display: inline-block;
+            background: linear-gradient(135deg, #4F46E5 0%, #667eea 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+            transition: all 0.3s ease;
+          ">Reset Password</a>
+        </div>
+        
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 25px 0;">
+          <h4 style="color: #856404; margin: 0 0 10px 0;">⚠️ Important Security Notes:</h4>
+          <ul style="color: #856404; margin: 0; padding-left: 20px;">
+            <li style="margin-bottom: 8px;">This link will expire in 1 hour for security reasons</li>
+            <li style="margin-bottom: 8px;">If you didn't request this reset, please ignore this email</li>
+            <li style="margin-bottom: 0;">For security, this link can only be used once</li>
+          </ul>
+        </div>
+        
+        <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 20px; border-radius: 8px; margin: 25px 0;">
+          <h4 style="color: #1976d2; margin: 0 0 10px 0;">🔗 Alternative Method:</h4>
+          <p style="color: #1976d2; margin: 0;">
+            If the button above doesn't work, copy and paste this link into your browser:
+          </p>
+          <p style="color: #1976d2; margin: 10px 0 0 0; word-break: break-all; font-size: 14px;">
+            ${resetLink}
+          </p>
+        </div>
+        
+        <div style="border-top: 1px solid #e1e5e9; padding-top: 20px; margin-top: 30px;">
+          <p style="color: #888; font-size: 14px; margin: 0;">
+            If you have any questions or need assistance, please contact our support team.
+          </p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({ to: userEmail, subject, html });
+}; 

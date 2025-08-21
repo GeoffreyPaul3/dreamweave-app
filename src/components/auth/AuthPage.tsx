@@ -142,7 +142,12 @@ const AuthPage = () => {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
           <div className="w-16 h-16 gradient-primary rounded-xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-3xl">D</span>
+              <img 
+                   src="/dreamwave-logo.png"
+                   alt="Dream Weave Logo"
+                   width={100}
+                   height={100}
+                    />
           </div>
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
             DreamWeave
