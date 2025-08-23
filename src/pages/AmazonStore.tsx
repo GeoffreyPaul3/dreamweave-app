@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Star, Truck, Plus, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Search, ShoppingCart, Star, Truck, Plus, ChevronLeft, ChevronRight, Loader2, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { rapidAPIAmazonService } from '@/integrations/amazon-uae/rapidapi-service';
-import { AmazonProduct } from '@/integrations/amazon-uae/types';
+import { combinedStoreService, CombinedProduct } from '@/integrations/combined-store/service';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,7 +13,7 @@ import { useAmazonCart } from '@/contexts/AmazonCartContext';
 import { useToast } from '@/hooks/use-toast';
 
 const AmazonStore = () => {
-  const [products, setProducts] = useState<AmazonProduct[]>([]);
+  const [products, setProducts] = useState<CombinedProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   
@@ -34,8 +33,8 @@ const AmazonStore = () => {
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const categories = [
-    'Electronics',
     'Fashion',
+    'Electronics',
     'Home & Garden',
     'Sports & Fitness',
     'Books & Toys',
@@ -67,7 +66,12 @@ const AmazonStore = () => {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await rapidAPIAmazonService.fetchProducts(selectedCategory, searchTerm);
+      const data = await combinedStoreService.fetchProducts({
+        category: selectedCategory,
+        search: searchTerm,
+        limit: 100, // Get more products to allow for better pagination
+        prioritizeFashion: selectedCategory === 'Fashion' || searchTerm.toLowerCase().includes('fashion')
+      });
       setProducts(data);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -94,7 +98,7 @@ const AmazonStore = () => {
     navigate(`/amazon/product/${productId}`);
   };
 
-  const handleAddToCart = (product: AmazonProduct) => {
+  const handleAddToCart = (product: CombinedProduct) => {
     addItem(product, 1);
     toast({
       title: "Added to Cart",
@@ -213,7 +217,7 @@ const AmazonStore = () => {
                  <div className="gradient-primary text-white rounded-lg p-8 mb-8">
            <h1 className="text-4xl font-bold mb-4">Dream Weave Dubai Store</h1>
            <p className="text-xl mb-6">
-             Shop the latest products from Dream Weave Dubai with fast delivery to Malawi
+             Shop the latest products from Dream Weave Dubai & Shein with fast delivery to Malawi
            </p>
           <div className="flex items-center space-x-4">
             <Truck className="w-6 h-6" />
@@ -230,7 +234,7 @@ const AmazonStore = () => {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
-                placeholder="Search Dream Weave Dubai products..."
+                placeholder="Search Dream Weave Dubai & Shein products..."
                 value={searchInput}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10"
@@ -275,12 +279,20 @@ const AmazonStore = () => {
           {currentProducts.map((product) => (
             <Card key={product.id} className="hover:shadow-lg transition-shadow cursor-pointer">
               <div onClick={() => handleProductClick(product.id)}>
-                                 <div className="aspect-square overflow-hidden rounded-t-lg">
+                                 <div className="aspect-square overflow-hidden rounded-t-lg relative">
                    <img
                      src={product.image_url}
                      alt={product.title}
                      className="w-full h-full object-cover hover:scale-105 transition-transform"
                    />
+                   {/* Source badge */}
+                   <Badge 
+                     variant="secondary" 
+                     className="absolute top-2 right-2 text-xs bg-white/90 text-gray-700"
+                   >
+                     <Tag className="w-3 h-3 mr-1" />
+                     {product.source === 'shein' ? 'Shein' : 'Amazon'}
+                   </Badge>
                  </div>
                  <CardContent className="p-3">
                                      <CardTitle className="text-sm md:text-base font-semibold mb-2 line-clamp-2">

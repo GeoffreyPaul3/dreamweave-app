@@ -16,6 +16,7 @@ export interface AmazonProduct {
   availability: boolean;
   size?: string; // Available sizes for fashion products
   color?: string; // Available colors for fashion products
+  source?: 'amazon' | 'shein'; // Track the source of the product
   created_at: string;
   updated_at: string;
 }

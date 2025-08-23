@@ -24,7 +24,8 @@ import {
   Plus,
   Trash2,
   Upload,
-  X
+  X,
+  RefreshCw
 } from 'lucide-react';
 import { rapidAPIAmazonService } from '@/integrations/amazon-uae/rapidapi-service';
 import { AmazonProduct, AmazonOrder, AmazonUser, RequestOrder } from '@/integrations/amazon-uae/types';
@@ -35,6 +36,7 @@ import AmazonReceiptPDF from '@/components/AmazonReceiptPDF';
 import Footer from '@/components/Footer';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { combinedStoreService } from '@/integrations/combined-store/service';
 
 const AmazonAdminDashboard = () => {
   const { user, isAdmin } = useAuth();
@@ -67,6 +69,8 @@ const AmazonAdminDashboard = () => {
   const [requestOrderSearchTerm, setRequestOrderSearchTerm] = useState('');
   const [selectedRequestStatus, setSelectedRequestStatus] = useState<string>('');
   const [editingPrice, setEditingPrice] = useState<string>('');
+  const [apiStatus, setApiStatus] = useState<{ amazon: boolean; shein: boolean }>({ amazon: true, shein: true });
+  const [usingFallback, setUsingFallback] = useState(false);
   const [editingNotes, setEditingNotes] = useState<string>('');
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
   const [newProduct, setNewProduct] = useState({
@@ -119,6 +123,12 @@ const AmazonAdminDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
+      // Only check API status if we don't have cached results
+      if (!apiStatus.amazon && !apiStatus.shein) {
+        const healthCheck = await combinedStoreService.healthCheck();
+        setApiStatus(healthCheck);
+      }
+
       console.log('rapidAPIAmazonService:', rapidAPIAmazonService);
       console.log('fetchProducts method:', rapidAPIAmazonService.fetchProducts);
       
@@ -146,36 +156,126 @@ const AmazonAdminDashboard = () => {
     }
   };
 
-  const handleSyncProducts = async () => {
+    const handleSyncProducts = async () => {
     setIsSyncing(true);
     try {
       toast({
         title: "Syncing Products",
-                 description: "Syncing Dream Weave Dubai products by category...",
+        description: "Syncing products from Amazon and Shein APIs...",
       });
       
-      await rapidAPIAmazonService.syncProductsFromAmazon();
+      // Use cached health check results to avoid excessive API calls
+      let healthCheck = apiStatus;
+      if (!healthCheck.amazon && !healthCheck.shein) {
+        healthCheck = await combinedStoreService.healthCheck();
+        setApiStatus(healthCheck);
+      }
       
-      toast({
-        title: "Products Synced Successfully",
-                 description: "Dream Weave Dubai products have been synced and organized by categories",
-      });
+      // Reset fallback state if Amazon is available again
+      if (healthCheck.amazon && usingFallback) {
+        setUsingFallback(false);
+      }
+      
+      if (!healthCheck.amazon && !healthCheck.shein) {
+        throw new Error('Both Amazon and Shein APIs are currently unavailable');
+      }
+      
+      let amazonSuccess = false;
+      let sheinSuccess = false;
+      
+      // Try to sync from Amazon first
+      if (healthCheck.amazon) {
+        try {
+          await rapidAPIAmazonService.syncProductsFromAmazon();
+          amazonSuccess = true;
+          toast({
+            title: "Amazon Products Synced",
+            description: "Products have been synced from Amazon successfully",
+          });
+        } catch (amazonError: any) {
+          console.error('Amazon sync failed:', amazonError);
+          
+          if (amazonError.message?.includes('rate limit') || amazonError.message?.includes('429')) {
+            toast({
+              title: "Amazon Rate Limited",
+              description: "Amazon API is rate limited. Falling back to Shein products...",
+              variant: "destructive"
+            });
+          } else {
+            // For non-rate-limit errors, still try Shein as fallback
+            toast({
+              title: "Amazon Sync Failed",
+              description: "Amazon sync failed. Trying Shein as fallback...",
+              variant: "destructive"
+            });
+          }
+        }
+      }
+      
+      // Try Shein as fallback if Amazon failed or if Amazon is unavailable
+      if (!amazonSuccess && healthCheck.shein) {
+        setUsingFallback(true);
+        try {
+          toast({
+            title: "Syncing from Shein",
+            description: "Syncing products from Shein API...",
+          });
+          
+          // Use the combined service to fetch Shein products with reduced limit
+          const sheinProducts = await combinedStoreService.getFashionProducts('', 25);
+          
+          if (sheinProducts.length > 0) {
+            // Store Shein products in the database
+            for (const product of sheinProducts) {
+              await rapidAPIAmazonService.upsertProduct(product);
+            }
+            
+            sheinSuccess = true;
+            toast({
+              title: "Shein Products Synced",
+              description: `${sheinProducts.length} Shein products have been synced successfully`,
+            });
+          } else {
+            throw new Error('No Shein products found');
+          }
+        } catch (sheinError: any) {
+          console.error('Shein sync failed:', sheinError);
+          toast({
+            title: "Shein Sync Failed",
+            description: "Failed to sync products from Shein as well.",
+            variant: "destructive"
+          });
+        }
+      }
+      
+      // Final status message
+      if (amazonSuccess || sheinSuccess) {
+        toast({
+          title: "Sync Completed",
+          description: `Sync completed successfully. ${amazonSuccess ? 'Amazon' : ''}${amazonSuccess && sheinSuccess ? ' and ' : ''}${sheinSuccess ? 'Shein' : ''} products are now available.`,
+        });
+        setUsingFallback(!amazonSuccess && sheinSuccess);
+      } else {
+        throw new Error('Both Amazon and Shein syncs failed');
+      }
       
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sync error:', error);
       
       // Provide specific error messages based on the error type
-             let errorMessage = "Failed to sync products from Dream Weave Dubai. Please try again.";
+      let errorMessage = "Failed to sync products. Please try again.";
       
-      if (error instanceof Error) {
-        if (error.message.includes('rate limit') || error.message.includes('429')) {
-          errorMessage = "API rate limit exceeded. Please try again in a few minutes or upgrade your RapidAPI plan.";
-        } else if (error.message.includes('API')) {
-          errorMessage = "Amazon API is currently unavailable. Please try again later.";
-        } else if (error.message.includes('network')) {
-          errorMessage = "Network error. Please check your internet connection and try again.";
-        }
+      if (error.message?.includes('rate limit') || error.message?.includes('429')) {
+        errorMessage = "API rate limit exceeded. Products will be available from Shein only. Please try again in a few minutes.";
+      } else if (error.message?.includes('API')) {
+        errorMessage = "APIs are currently unavailable. Please try again later.";
+      } else if (error.message?.includes('network')) {
+        errorMessage = "Network error. Please check your internet connection and try again.";
+      } else if (error.message?.includes('Both Amazon and Shein')) {
+        errorMessage = "All product APIs are currently unavailable. Please try again later.";
+      } else if (error.message?.includes('Both Amazon and Shein syncs failed')) {
+        errorMessage = "Failed to sync from both Amazon and Shein. Please try again later.";
       }
       
       toast({
@@ -284,7 +384,7 @@ const AmazonAdminDashboard = () => {
   };
 
   const handleSelectAllProducts = () => {
-    if (selectedProducts.size === products.length) {
+    if (selectedProducts?.size === products.length) {
       // If all are selected, deselect all
       setSelectedProducts(new Set());
     } else {
@@ -294,7 +394,7 @@ const AmazonAdminDashboard = () => {
   };
 
   const handleSelectProduct = (productId: string) => {
-    const newSelected = new Set(selectedProducts);
+    const newSelected = new Set(selectedProducts || []);
     if (newSelected.has(productId)) {
       newSelected.delete(productId);
     } else {
@@ -304,7 +404,7 @@ const AmazonAdminDashboard = () => {
   };
 
   const handleDeleteSelectedProducts = async () => {
-    if (selectedProducts.size === 0) {
+    if (!selectedProducts || selectedProducts.size === 0) {
       toast({
         title: "No Products Selected",
         description: "Please select at least one product to delete",
@@ -820,27 +920,64 @@ const AmazonAdminDashboard = () => {
       <Header />
       
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-                     <h1 className="text-3xl font-bold">Dream Weave Dubai Admin Dashboard</h1>
-          <div className="flex gap-2">
-            <Button 
-              onClick={handleSyncProducts} 
-              disabled={isSyncing}
-              className="flex items-center gap-2"
-            >
-              <Package className="w-4 h-4" />
-              {isSyncing ? 'Syncing...' : 'Sync Products'}
-            </Button>
-            <Button 
-              onClick={handleUpdateBrands} 
-              disabled={isUpdatingBrands}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <Edit className="w-4 h-4" />
-              {isUpdatingBrands ? 'Updating...' : 'Update Brands'}
-            </Button>
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-3xl font-bold">Dream Weave Dubai Admin Dashboard</h1>
+            <div className="flex gap-2">
+                             <Button 
+                 onClick={handleSyncProducts} 
+                 disabled={isSyncing}
+                 className={`flex items-center gap-2 ${usingFallback ? 'bg-yellow-600 hover:bg-yellow-700' : ''}`}
+               >
+                 <Package className="w-4 h-4" />
+                 {isSyncing ? 'Syncing...' : usingFallback ? 'Sync (Shein Fallback)' : 'Sync Products'}
+               </Button>
+              <Button 
+                onClick={handleUpdateBrands} 
+                disabled={isUpdatingBrands}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Edit className="w-4 h-4" />
+                {isUpdatingBrands ? 'Updating...' : 'Update Brands'}
+              </Button>
+            </div>
           </div>
+          
+                     {/* API Status Indicator */}
+           <div className="flex gap-4 items-center">
+             <div className="flex items-center gap-2">
+               <div className={`w-3 h-3 rounded-full ${apiStatus.amazon ? 'bg-green-500' : 'bg-red-500'}`}></div>
+               <span className="text-sm font-medium">Amazon API: {apiStatus.amazon ? 'Online' : 'Offline'}</span>
+             </div>
+             <div className="flex items-center gap-2">
+               <div className={`w-3 h-3 rounded-full ${apiStatus.shein ? 'bg-green-500' : 'bg-red-500'}`}></div>
+               <span className="text-sm font-medium">Shein API: {apiStatus.shein ? 'Online' : 'Offline'}</span>
+             </div>
+             {!apiStatus.amazon && apiStatus.shein && (
+               <div className="flex items-center gap-2">
+                 <div className="w-3 h-3 rounded-full bg-yellow-500 animate-pulse"></div>
+                 <span className="text-sm font-medium text-yellow-700">Using Shein Fallback</span>
+               </div>
+             )}
+             <Button
+               variant="outline"
+               size="sm"
+               onClick={async () => {
+                 combinedStoreService.clearHealthCheckCache();
+                 const healthCheck = await combinedStoreService.healthCheck();
+                 setApiStatus(healthCheck);
+                 toast({
+                   title: "API Status Updated",
+                   description: "API status has been refreshed",
+                 });
+               }}
+               className="ml-4"
+             >
+               <RefreshCw className="w-4 h-4 mr-1" />
+               Refresh Status
+             </Button>
+           </div>
         </div>
 
         {/* Stats Cards */}
@@ -995,7 +1132,7 @@ const AmazonAdminDashboard = () => {
                  <div className="flex items-center justify-between">
                    <CardTitle>Product Management</CardTitle>
                    <div className="flex gap-2">
-                     {selectedProducts.size > 0 && (
+                     {selectedProducts?.size > 0 && (
                        <Button 
                          variant="destructive" 
                          onClick={handleDeleteSelectedProducts}
@@ -1003,7 +1140,7 @@ const AmazonAdminDashboard = () => {
                          className="flex items-center gap-2"
                        >
                          <Trash2 className="w-4 h-4" />
-                         {isDeletingProducts ? 'Deleting...' : `Delete Selected (${selectedProducts.size})`}
+                         {isDeletingProducts ? 'Deleting...' : `Delete Selected (${selectedProducts?.size || 0})`}
                        </Button>
                      )}
                      <Button onClick={() => setShowAddDialog(true)} className="flex items-center gap-2">
@@ -1021,7 +1158,7 @@ const AmazonAdminDashboard = () => {
                         <div className="flex items-center gap-2">
                           <input
                             type="checkbox"
-                            checked={selectedProducts.size === products.length && products.length > 0}
+                            checked={selectedProducts?.size === products.length && products.length > 0}
                             onChange={handleSelectAllProducts}
                             className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                           />
@@ -1041,7 +1178,7 @@ const AmazonAdminDashboard = () => {
                         <TableCell>
                           <input
                             type="checkbox"
-                            checked={selectedProducts.has(product.id)}
+                            checked={selectedProducts?.has(product.id) || false}
                             onChange={() => handleSelectProduct(product.id)}
                             className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                           />
