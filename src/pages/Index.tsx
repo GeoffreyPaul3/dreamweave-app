@@ -15,7 +15,12 @@ const Index = () => {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 gradient-primary rounded-xl flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <span className="text-white font-bold text-3xl">D</span>
+          <img 
+                   src="/dreamwave-logo.png"
+                   alt="Dream Weave Logo"
+                   width={100}
+                   height={100}
+                    />
           </div>
           <p className="text-gray-600">Loading DreamWeave...</p>
         </div>

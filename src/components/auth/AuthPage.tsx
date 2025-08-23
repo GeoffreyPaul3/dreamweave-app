@@ -29,6 +29,10 @@ const AuthPage = () => {
     location: ''
   });
 
+  const [resetData, setResetData] = useState({
+    email: ''
+  });
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -137,6 +141,43 @@ const AuthPage = () => {
     }
   };
 
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      console.log('Attempting password reset for:', resetData.email);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(resetData.email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+
+      if (error) {
+        console.error('Password reset error:', error);
+        throw error;
+      }
+
+      console.log('Password reset email sent successfully');
+
+      toast({
+        title: "Reset email sent!",
+        description: "Please check your email for password reset instructions.",
+      });
+
+      // Clear the form
+      setResetData({ email: '' });
+    } catch (error: any) {
+      console.error('Password reset failed:', error);
+      toast({
+        title: "Password reset failed",
+        description: error.message || "An error occurred while sending reset email",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-xl">
@@ -157,9 +198,10 @@ const AuthPage = () => {
 
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsTrigger value="reset">Reset</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
@@ -276,6 +318,36 @@ const AuthPage = () => {
                   disabled={isLoading}
                 >
                   {isLoading ? 'Creating account...' : 'Create Account'}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="reset">
+              <form onSubmit={handlePasswordReset} className="space-y-4">
+                <div className="text-center mb-4">
+                  <p className="text-sm text-gray-600">
+                    Enter your email address and we'll send you a link to reset your password.
+                  </p>
+                </div>
+                
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    className="pl-10"
+                    value={resetData.email}
+                    onChange={(e) => setResetData(prev => ({ ...prev, email: e.target.value }))}
+                    required
+                  />
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full gradient-primary"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Sending reset email...' : 'Send Reset Email'}
                 </Button>
               </form>
             </TabsContent>
