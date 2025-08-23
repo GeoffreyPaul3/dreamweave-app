@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import ListingCard from '@/components/ListingCard';
-import { Search, Filter, SlidersHorizontal } from 'lucide-react';
+import { Search, Filter, SlidersHorizontal, Loader2 } from 'lucide-react';
 
 interface Listing {
   id: string;
@@ -37,7 +37,12 @@ const SearchListings = () => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Separate state for immediate input value and actual search term
+  const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
+  const [currentSearchTerm, setCurrentSearchTerm] = useState(searchParams.get('search') || '');
   
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
@@ -49,11 +54,51 @@ const SearchListings = () => {
     sortBy: searchParams.get('sortBy') || 'newest'
   });
 
+  // Ref for debounce timeout
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced search function
+  const debouncedSearch = useCallback((searchTerm: string) => {
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    // Set new timeout
+    debounceTimeoutRef.current = setTimeout(() => {
+      setCurrentSearchTerm(searchTerm);
+      setSearchLoading(true);
+      
+      // Update filters with new search term
+      const newFilters = { ...filters, search: searchTerm };
+      setFilters(newFilters);
+      
+      // Update URL params only for search
+      const newSearchParams = new URLSearchParams(searchParams);
+      if (searchTerm) {
+        newSearchParams.set('search', searchTerm);
+      } else {
+        newSearchParams.delete('search');
+      }
+      setSearchParams(newSearchParams);
+    }, 800); // 800ms delay for better UX
+  }, [filters, searchParams, setSearchParams]);
+
+  // Handle search input change
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    debouncedSearch(value);
+  };
+
+  // Effect to fetch listings when filters change
+  useEffect(() => {
+    fetchListings();
+  }, [currentSearchTerm, filters.category, filters.minPrice, filters.maxPrice, filters.location, filters.condition, filters.sortBy]);
+
+  // Effect to fetch categories on mount
   useEffect(() => {
     fetchCategories();
-    fetchListings();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, []);
 
   const fetchCategories = async () => {
     try {
@@ -88,8 +133,8 @@ const SearchListings = () => {
         .eq('status', 'active');
 
       // Apply filters
-      if (filters.search) {
-        query = query.ilike('title', `%${filters.search}%`);
+      if (currentSearchTerm) {
+        query = query.ilike('title', `%${currentSearchTerm}%`);
       }
       
       if (filters.category) {
@@ -135,6 +180,7 @@ const SearchListings = () => {
       console.error('Error fetching listings:', error);
     } finally {
       setLoading(false);
+      setSearchLoading(false);
     }
   };
 
@@ -143,14 +189,21 @@ const SearchListings = () => {
     setFilters(newFilters);
     
     // Update URL params
-    const newSearchParams = new URLSearchParams();
-    Object.entries(newFilters).forEach(([k, v]) => {
-      if (v) newSearchParams.set(k, v);
-    });
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (value) {
+      newSearchParams.set(key, value);
+    } else {
+      newSearchParams.delete(key);
+    }
     setSearchParams(newSearchParams);
   };
 
   const resetFilters = () => {
+    // Clear debounce timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    
     setFilters({
       search: '',
       category: '',
@@ -160,8 +213,19 @@ const SearchListings = () => {
       condition: '',
       sortBy: 'newest'
     });
+    setSearchInput('');
+    setCurrentSearchTerm('');
     setSearchParams({});
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -175,15 +239,20 @@ const SearchListings = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
                 placeholder="Search for products..."
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
+                value={searchInput}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10"
+                disabled={loading}
               />
+              {searchLoading && (
+                <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin" />
+              )}
             </div>
             <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
               className="md:w-auto"
+              disabled={loading}
             >
               <SlidersHorizontal className="w-4 h-4 mr-2" />
               Filters

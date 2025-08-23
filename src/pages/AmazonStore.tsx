@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Star, Truck, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ShoppingCart, Star, Truck, Plus, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +16,12 @@ import { useToast } from '@/hooks/use-toast';
 const AmazonStore = () => {
   const [products, setProducts] = useState<AmazonProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
+  
+  // Separate state for immediate input value and actual search term
+  const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(12);
@@ -24,6 +29,9 @@ const AmazonStore = () => {
   const navigate = useNavigate();
   const { addItem, state } = useAmazonCart();
   const { toast } = useToast();
+
+  // Ref for debounce timeout
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const categories = [
     'Electronics',
@@ -35,22 +43,52 @@ const AmazonStore = () => {
     'Automotive'
   ];
 
+  // Debounced search function
+  const debouncedSearch = useCallback((searchValue: string) => {
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    // Set new timeout
+    debounceTimeoutRef.current = setTimeout(() => {
+      setSearchTerm(searchValue);
+      setSearchLoading(true);
+      setCurrentPage(1); // Reset to first page when search changes
+    }, 800); // 800ms delay for better UX
+  }, []);
+
+  // Handle search input change
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    debouncedSearch(value);
+  };
+
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
       const data = await rapidAPIAmazonService.fetchProducts(selectedCategory, searchTerm);
       setProducts(data);
-      setCurrentPage(1); // Reset to first page when filters change
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
       setLoading(false);
+      setSearchLoading(false);
     }
   }, [selectedCategory, searchTerm]);
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleProductClick = (productId: string) => {
     navigate(`/amazon/product/${productId}`);
@@ -192,11 +230,15 @@ const AmazonStore = () => {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
-                                 placeholder="Search Dream Weave Dubai products..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search Dream Weave Dubai products..."
+                value={searchInput}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10"
+                disabled={loading}
               />
+              {searchLoading && (
+                <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin" />
+              )}
             </div>
                          <Button onClick={() => navigate('/amazon/cart')} className="flex items-center gap-2">
                <ShoppingCart className="w-4 h-4" />
@@ -210,6 +252,7 @@ const AmazonStore = () => {
               variant={selectedCategory === '' ? 'default' : 'outline'}
               onClick={() => setSelectedCategory('')}
               size="sm"
+              disabled={loading}
             >
               All Categories
             </Button>
@@ -219,6 +262,7 @@ const AmazonStore = () => {
                 variant={selectedCategory === category ? 'default' : 'outline'}
                 onClick={() => setSelectedCategory(category)}
                 size="sm"
+                disabled={loading}
               >
                 {category}
               </Button>
